@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShiftMate</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="icons/smily-pumpkin-48.png" alt="ShiftMate" id="app-logo">
+        <span>ShiftMate</span>
+      </div>
+      <div class="status-indicator" id="connection-status">
+        <span class="dot"></span>
+        <span class="text">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Init View (Login) -->
+    <div id="view-init" class="view hidden">
+      <div class="card intro-card">
+        <h2>Sign in to Keka</h2>
+
+        <!-- Status line while we silently try auto-grab -->
+        <p id="login-status" class="login-status">Checking for an open Keka session…</p>
+        <p id="login-error" class="login-error hidden"></p>
+
+        <!-- Step 1: email -->
+        <div id="login-step-email" class="login-step hidden">
+          <label class="field-label" for="login-email">Work email</label>
+          <input type="email" id="login-email" class="text-input" autocomplete="username" placeholder="you@company.com">
+          <button id="btn-login-continue" class="btn btn-primary">Continue</button>
+        </div>
+
+        <!-- Step 2: password + captcha -->
+        <div id="login-step-password" class="login-step hidden">
+          <div class="login-email-readback">
+            <span id="login-email-display">—</span>
+            <button type="button" id="btn-login-change-email" class="btn-link">Change</button>
+          </div>
+
+          <label class="field-label" for="login-password">Password</label>
+          <div class="password-row">
+            <input type="password" id="login-password" class="text-input" autocomplete="current-password" placeholder="••••••••">
+            <button type="button" id="btn-toggle-password" class="btn-link password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+
+          <label class="field-label" for="login-captcha">Captcha</label>
+          <div class="captcha-row">
+            <img id="captcha-image" class="captcha-img" alt="captcha">
+            <button type="button" id="btn-captcha-refresh" class="btn-link captcha-refresh" title="Refresh captcha">↻</button>
+          </div>
+          <input type="text" id="login-captcha" class="text-input" autocapitalize="characters" autocomplete="off" placeholder="Type the characters above">
+
+          <button id="btn-login-submit" class="btn btn-primary">Sign in</button>
+        </div>
+
+        <!-- Secondary actions -->
+        <div class="login-alt">
+          <button id="btn-auto-grab" class="btn-link">Retry auto-grab from open Keka tab</button>
+          <button id="btn-show-token-paste" class="btn-link">Advanced: paste refresh token</button>
+        </div>
+
+        <!-- Hidden until "Advanced" is clicked -->
+        <div id="login-step-token" class="login-step hidden">
+          <label class="field-label" for="refresh-token-input">refresh_token</label>
+          <textarea id="refresh-token-input" placeholder="Paste refresh_token here..."></textarea>
+          <button id="btn-save-token" class="btn btn-primary">Connect with token</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="view-dashboard" class="view hidden">
+      <!-- User Profile -->
+      <div class="user-profile" id="user-profile">
+        <img class="avatar" id="user-avatar" src="" alt="User" nonce="1234">
+        <div class="info">
+          <h3 id="user-name">Loading...</h3>
+          <p id="user-title">...</p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="today">Today</button>
+        <button class="tab" data-tab="history">History</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </div>
+
+      <!-- Today Tab -->
+      <div class="tab-panel" id="tab-today">
+        <!-- Main Status Card -->
+        <div class="card status-card">
+          <div class="timer-display">
+            <span id="current-time">--:--</span>
+            <small id="current-date">Today</small>
+          </div>
+          <div class="attendance-summary">
+            <div class="stat">
+              <label>In</label>
+              <span id="stat-in">--:--</span>
+            </div>
+            <div class="stat">
+              <label>Out</label>
+              <span id="stat-out">--:--</span>
+            </div>
+            <div class="stat">
+              <label>Duration</label>
+              <span id="stat-duration">0h 0m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button id="btn-clock-in" class="btn btn-success action-btn">
+            <span class="icon">📍</span> Punch In
+          </button>
+          <button id="btn-clock-out" class="btn btn-danger action-btn">
+            <span class="icon">👋</span> Punch Out
+          </button>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card history-card">
+          <h4>Activity Log</h4>
+          <div id="history-list" class="history-list">
+            <!-- Items injected here -->
+          </div>
+        </div>
+
+        <!-- Take a Break -->
+        <div class="card break-card">
+          <h4>Take a Break</h4>
+          <div id="break-idle">
+            <p class="break-hint">Punches you OUT now and back IN automatically after the chosen duration.</p>
+            <div class="break-presets">
+              <button class="btn-break" data-min="30">30 min</button>
+              <button class="btn-break" data-min="45">45 min</button>
+              <button class="btn-break" data-min="60">60 min</button>
+              <button class="btn-break" data-min="0">Custom</button>
+            </div>
+          </div>
+          <div id="break-active" class="hidden">
+            <p class="break-status">On break — returning at <strong id="break-return-time">--:--</strong></p>
+            <p class="break-countdown" id="break-countdown">--</p>
+            <button id="btn-return-now" class="btn btn-primary">Return Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div class="tab-panel hidden" id="tab-history">
+        <div class="card history-card">
+          <h4>Previous Days</h4>
+          <div id="day-list" class="day-list">
+            <div style="text-align:center; color: var(--text-muted); font-size: 12px; padding: 16px;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div class="tab-panel hidden" id="tab-settings">
+        <div class="card">
+          <h4>Account</h4>
+          <div class="setting-row">
+            <span>Status</span>
+            <span id="setting-connection" class="setting-value">—</span>
+          </div>
+          <div class="setting-row">
+            <span>Client ID</span>
+            <span id="setting-clientid" class="setting-value mono">—</span>
+          </div>
+        </div>
+
+        <div class="card danger-zone">
+          <h4>Reset</h4>
+          <p class="hint">Clears stored tokens, client ID, active break, and badge. You will need to reconnect.</p>
+          <button id="btn-reset" class="btn btn-danger-solid">Reset Everything</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

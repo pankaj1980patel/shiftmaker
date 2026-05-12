@@ -1,0 +1,12 @@
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+
+# Local Web Store upload artifacts
+*.zip
+*.crx
+*.pem
+
+# IDE scratchpad files
+Untitled-*

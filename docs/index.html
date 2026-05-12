@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ShiftMate — Privacy Policy</title>
+  <style>
+    :root {
+      --bg: #faf9f7;
+      --surface: #ffffff;
+      --text: #1f2024;
+      --muted: #5f6470;
+      --border: #e6e3dc;
+      --primary: #5c6bc0;
+      --code-bg: #f3f1ec;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15161a;
+        --surface: #1c1e23;
+        --text: #e9eaee;
+        --muted: #9aa0aa;
+        --border: #2a2d34;
+        --primary: #7986cb;
+        --code-bg: #23262d;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+    header { margin-bottom: 32px; }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+      letter-spacing: -0.01em;
+    }
+    header .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    h2 {
+      margin-top: 36px;
+      margin-bottom: 8px;
+      font-size: 18px;
+      letter-spacing: -0.005em;
+    }
+    p, li { font-size: 15px; }
+    ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    a { color: var(--primary); }
+    code {
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+    .footer {
+      margin-top: 56px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ShiftMate — Privacy Policy</h1>
+      <div class="subtitle">Last updated: 12 May 2026</div>
+    </header>
+
+    <p>
+      ShiftMate is a browser extension that helps users of the
+      <a href="https://www.keka.com/">Keka</a> HR platform clock in and out,
+      take timed breaks, and view their attendance from the browser toolbar.
+      This page explains exactly what data the extension touches and where
+      that data lives.
+    </p>
+
+    <p>
+      <strong>Short version:</strong> ShiftMate has no servers. Everything
+      runs locally in your browser, and the only network destination is
+      Keka itself. Your data is not collected, sold, shared, or transmitted
+      to the extension's author.
+    </p>
+
+    <h2>1. Data the extension handles</h2>
+    <div class="card">
+      <p>To do its job, ShiftMate handles the following pieces of data, all
+      of which originate from your interaction with Keka:</p>
+      <ul>
+        <li>
+          <strong>OIDC tokens</strong> (access token, refresh token, expiry,
+          OIDC client_id) — issued by Keka's identity server to authenticate
+          your API calls.
+        </li>
+        <li>
+          <strong>Email and password</strong> — only when you choose to sign
+          in through the extension's built-in login form. They are sent
+          directly to Keka's login endpoint (<code>app.keka.com</code>) and
+          are never retained by the extension after the request completes.
+        </li>
+        <li>
+          <strong>Captcha response</strong> — submitted along with the
+          password on Keka's request. Not retained.
+        </li>
+        <li>
+          <strong>Attendance data</strong> (today's punches, recent
+          workdays, totals) — fetched from Keka on demand to render the
+          popup; not stored beyond what the popup needs to display.
+        </li>
+        <li>
+          <strong>Active break state</strong> (start time, return time,
+          duration) — stored locally so the countdown survives the popup
+          closing.
+        </li>
+        <li>
+          <strong>Keka tenant subdomain</strong> — read from the
+          <code>Subdomain</code> cookie Keka itself sets on
+          <code>.keka.com</code>, so the extension calls the correct API
+          host.
+        </li>
+      </ul>
+    </div>
+
+    <h2>2. Where this data is stored</h2>
+    <p>
+      All persistent data is written exclusively to
+      <code>chrome.storage.sync</code> — Chrome's built-in, encrypted
+      storage tied to your Google profile. Nothing is written to any
+      external database, file, or remote server operated by the extension
+      author.
+    </p>
+
+    <h2>3. Where this data is sent</h2>
+    <p>The extension contacts the following hosts, all owned by Keka:</p>
+    <ul>
+      <li><code>https://app.keka.com</code> — OIDC authentication endpoints (<code>/connect/authorize</code>, <code>/connect/token</code>, <code>/Account/Login</code>, <code>/captcha</code>).</li>
+      <li><code>https://&lt;your-subdomain&gt;.keka.com</code> — attendance APIs (clock in/out, daily and historical punch data, user profile, deploy config).</li>
+    </ul>
+    <p>
+      No other host is contacted. No data is sent to the author, to
+      analytics services, to advertising networks, or to any third party.
+    </p>
+
+    <h2>4. What the extension does <em>not</em> do</h2>
+    <ul>
+      <li>It does not run any analytics, telemetry, crash reporting, or remote logging.</li>
+      <li>It does not load or execute remote code. All extension code is bundled in the package.</li>
+      <li>It does not read tabs, cookies, or storage from non-Keka domains.</li>
+      <li>It does not sell, share, or transfer your data to anyone.</li>
+      <li>It does not display advertising and is not monetized.</li>
+    </ul>
+
+    <h2>5. Permissions, briefly explained</h2>
+    <ul>
+      <li><code>storage</code> — keep tokens and break state across popup opens.</li>
+      <li><code>alarms</code> — fire the auto clock-in at the end of a timed break, and refresh the toolbar badge once a minute.</li>
+      <li><code>notifications</code> — confirm whether the post-break auto clock-in succeeded.</li>
+      <li><code>tabs</code> + <code>scripting</code> — detect an open Keka tab so you can sign in without copying tokens by hand.</li>
+      <li><code>cookies</code> — read the Keka-set <code>Subdomain</code> cookie to find your tenant.</li>
+      <li>Host permissions on <code>*.keka.com</code> — required to call Keka's own APIs.</li>
+    </ul>
+
+    <h2>6. Your control</h2>
+    <p>
+      You can clear every piece of data ShiftMate has stored at any time
+      via the popup's <strong>Settings → Reset Everything</strong> button,
+      or by removing the extension from
+      <code>chrome://extensions/</code>.
+    </p>
+
+    <h2>7. Children</h2>
+    <p>
+      ShiftMate is designed for adult employees of organisations that use
+      Keka. It is not intended for use by children under 13.
+    </p>
+
+    <h2>8. Changes to this policy</h2>
+    <p>
+      If the extension's data handling ever changes, this page will be
+      updated and the "Last updated" date at the top will change with it.
+    </p>
+
+    <h2>9. Contact</h2>
+    <p>
+      Questions or concerns:
+      <a href="https://github.com/pankaj1980patel/shiftmaker/issues">open an issue on GitHub</a>.
+    </p>
+
+    <div class="footer">
+      ShiftMate is an independent open-source project. It is not affiliated
+      with, endorsed by, or sponsored by Keka HR Technologies Pvt Ltd.
+    </div>
+  </main>
+</body>
+</html>

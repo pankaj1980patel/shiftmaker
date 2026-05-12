@@ -1,0 +1,31 @@
+{
+    "manifest_version": 3,
+    "name": "ShiftMate",
+    "version": "1.0.0",
+    "description": "Punch in/out, timed breaks with auto clock-in, daily history, and a live progress badge for your 8-hour goal.",
+    "permissions": [
+        "storage",
+        "alarms",
+        "notifications",
+        "tabs",
+        "scripting",
+        "cookies"
+    ],
+    "host_permissions": [
+        "https://zujo.keka.com/*",
+        "https://app.keka.com/*"
+    ],
+    "background": {
+        "service_worker": "src/background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "src/popup.html",
+        "default_title": "ShiftMate — attendance, breaks & progress"
+    },
+    "icons": {
+        "16": "src/icons/bone-32.png",
+        "48": "src/icons/bone-48.png",
+        "128": "src/icons/bone-128.png"
+    }
+}

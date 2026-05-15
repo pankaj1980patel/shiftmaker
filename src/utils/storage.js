@@ -10,7 +10,8 @@ const KEYS = {
   USER_PROFILE: 'user_profile',
   AUTO_CONFIG: 'auto_config',
   AUTO_MARKERS: 'auto_markers',
-  ACTIVE_BREAK: 'active_break'
+  ACTIVE_BREAK: 'active_break',
+  TENANT_SUBDOMAIN: 'tenant_subdomain' // e.g. "acme.keka.com"
 };
 
 export const DEFAULT_AUTO_CONFIG = {

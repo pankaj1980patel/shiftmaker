@@ -1,4 +1,5 @@
 import { Storage } from './storage.js';
+import { normalizeTenant } from './tenant.js';
 
 /**
  * Scans an open Keka tab's localStorage / sessionStorage / cookies for OIDC
@@ -13,18 +14,26 @@ import { Storage } from './storage.js';
  *   accessToken: string | null,
  *   expiresAt: number | null,  // seconds since epoch (oidc-client-ts convention)
  *   clientId: string | null,
+ *   tenant: string | null,     // e.g. "acme.keka.com", null for the identity host
  *   source: string | null,
  *   seenKeys: string[]
  * }>}
  */
 export async function grabTokensFromKekaTab() {
-  const tabs = await chrome.tabs.query({
-    url: ['https://zujo.keka.com/*', 'https://app.keka.com/*', 'https://*.keka.com/*']
-  });
+  const tabs = await chrome.tabs.query({ url: 'https://*.keka.com/*' });
   if (!tabs.length) return null;
 
+  // Prefer a tenant tab (anything not app.keka.com) so we can capture the
+  // tenant host alongside the tokens.
+  const tenantTab = tabs.find(t => {
+    try { return normalizeTenant(new URL(t.url).host); } catch (_) { return false; }
+  }) || tabs[0];
+
+  let tenant = null;
+  try { tenant = normalizeTenant(new URL(tenantTab.url).host); } catch (_) {}
+
   const [{ result: storageResult } = {}] = await chrome.scripting.executeScript({
-    target: { tabId: tabs[0].id },
+    target: { tabId: tenantTab.id },
     func: () => {
       const out = {
         token: null,
@@ -98,7 +107,9 @@ export async function grabTokensFromKekaTab() {
     }
   });
 
-  return storageResult || null;
+  if (!storageResult) return null;
+  storageResult.tenant = tenant;
+  return storageResult;
 }
 
 /**
@@ -112,6 +123,7 @@ export async function refreshFromKekaTab() {
   const updates = {};
   if (result.token) updates[Storage.KEYS.REFRESH_TOKEN] = result.token;
   if (result.clientId) updates[Storage.KEYS.CLIENT_ID] = result.clientId;
+  if (result.tenant) updates[Storage.KEYS.TENANT_SUBDOMAIN] = result.tenant;
   if (result.accessToken) {
     updates[Storage.KEYS.ACCESS_TOKEN] = result.accessToken;
     const expiresAtMs = result.expiresAt

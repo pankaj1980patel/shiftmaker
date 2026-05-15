@@ -2,6 +2,14 @@ import { Storage, DEFAULT_AUTO_CONFIG } from './utils/storage.js';
 import { API, onAuthRequired } from './utils/api.js';
 import { grabTokensFromKekaTab } from './utils/grab-tokens.js';
 import { startEmailLogin, completeLogin, refreshCaptcha, cancelLogin } from './utils/auth-login.js';
+import {
+  getTenantSubdomain,
+  setTenantSubdomain,
+  tenantUrl,
+  discoverTenantFromTabs,
+  discoverTenantFromCookie,
+  normalizeTenant
+} from './utils/tenant.js';
 
 // DOM Elements
 const views = {
@@ -22,6 +30,7 @@ const ui = {
   loginStepEmail: document.getElementById('login-step-email'),
   loginStepPassword: document.getElementById('login-step-password'),
   loginStepToken: document.getElementById('login-step-token'),
+  loginTenantInput: document.getElementById('login-tenant'),
   loginEmailInput: document.getElementById('login-email'),
   loginEmailDisplay: document.getElementById('login-email-display'),
   loginPasswordInput: document.getElementById('login-password'),
@@ -51,6 +60,7 @@ const ui = {
     settings: document.getElementById('tab-settings')
   },
   settingConnection: document.getElementById('setting-connection'),
+  settingTenant: document.getElementById('setting-tenant'),
   settingClientId: document.getElementById('setting-clientid'),
   btnReset: document.getElementById('btn-reset'),
   autoOutEnabled: document.getElementById('auto-out-enabled'),
@@ -89,12 +99,16 @@ ui.tabs.forEach(tab => {
 });
 
 async function loadSettingsData() {
-  const data = await Storage.get([Storage.KEYS.REFRESH_TOKEN, Storage.KEYS.CLIENT_ID, Storage.KEYS.AUTO_CONFIG]);
+  const data = await Storage.get([Storage.KEYS.REFRESH_TOKEN, Storage.KEYS.CLIENT_ID, Storage.KEYS.AUTO_CONFIG, Storage.KEYS.TENANT_SUBDOMAIN]);
   const hasToken = !!data[Storage.KEYS.REFRESH_TOKEN];
   const clientId = data[Storage.KEYS.CLIENT_ID];
+  const tenant = data[Storage.KEYS.TENANT_SUBDOMAIN];
 
   ui.settingConnection.textContent = hasToken ? 'Connected' : 'Not connected';
   ui.settingConnection.className = 'setting-value ' + (hasToken ? 'connected' : 'disconnected');
+
+  ui.settingTenant.textContent = tenant || 'not set';
+  ui.settingTenant.title = tenant || '';
 
   ui.settingClientId.textContent = clientId || 'default (built-in)';
   ui.settingClientId.title = clientId || '';
@@ -194,13 +208,47 @@ async function init() {
 
   const { [Storage.KEYS.REFRESH_TOKEN]: token } = await Storage.get(Storage.KEYS.REFRESH_TOKEN);
   if (token) {
-    showDashboard();
+    // Existing install with no tenant yet (e.g. upgraded from v1.0.0) — try
+    // to discover it silently before hitting the dashboard, which needs it.
+    if (!(await getTenantSubdomain())) {
+      const cookieTenant = await discoverTenantFromCookie();
+      if (cookieTenant) await setTenantSubdomain(cookieTenant);
+      else {
+        const tabTenant = await discoverTenantFromTabs();
+        if (tabTenant) await setTenantSubdomain(tabTenant);
+      }
+    }
+    if (await getTenantSubdomain()) {
+      showDashboard();
+      return;
+    }
+    // Tenant still unknown — surface the login form (tenant input) without
+    // wiping tokens; the user just needs to tell us their workspace.
+    showInit();
+    await prefillTenantField();
+    setLoginStatus('');
+    setLoginError('Please enter your Keka workspace to continue.');
+    ui.loginTenantInput.focus();
     return;
   }
 
   // No tokens — show the init view and silently try auto-grab first.
   showInit();
+  await prefillTenantField();
   await trySilentAutoGrab();
+}
+
+// Best-effort fill of the tenant input on the login form so the user doesn't
+// have to type their workspace if we can infer it (existing storage, the
+// Subdomain cookie, or an open Keka tab).
+async function prefillTenantField() {
+  if (ui.loginTenantInput.value) return;
+  const stored = await getTenantSubdomain();
+  if (stored) { ui.loginTenantInput.value = stored.replace(/\.keka\.com$/i, ''); return; }
+  const fromCookie = await discoverTenantFromCookie();
+  if (fromCookie) { ui.loginTenantInput.value = fromCookie.replace(/\.keka\.com$/i, ''); return; }
+  const fromTab = await discoverTenantFromTabs();
+  if (fromTab) ui.loginTenantInput.value = fromTab.replace(/\.keka\.com$/i, '');
 }
 
 // One silent re-auth attempt per popup session. Without this latch, the
@@ -270,6 +318,7 @@ async function trySilentAutoGrab() {
     if (grabbed && grabbed.token) {
       const updates = { [Storage.KEYS.REFRESH_TOKEN]: grabbed.token };
       if (grabbed.clientId) updates[Storage.KEYS.CLIENT_ID] = grabbed.clientId;
+      if (grabbed.tenant) updates[Storage.KEYS.TENANT_SUBDOMAIN] = grabbed.tenant;
       if (grabbed.accessToken) {
         updates[Storage.KEYS.ACCESS_TOKEN] = grabbed.accessToken;
         const expiresAtMs = grabbed.expiresAt
@@ -324,7 +373,22 @@ function updateClock() {
 // === Email / password / captcha login ===
 
 ui.btnLoginContinue.addEventListener('click', async () => {
+  const tenantInput = ui.loginTenantInput.value.trim();
   const email = ui.loginEmailInput.value.trim();
+  if (!tenantInput) {
+    setLoginError('Enter your Keka workspace (the subdomain before .keka.com).');
+    ui.loginTenantInput.focus();
+    return;
+  }
+  let tenant;
+  try {
+    tenant = normalizeTenant(tenantInput);
+    if (!tenant) throw new Error('bad');
+  } catch (_) {
+    setLoginError('That workspace doesn\'t look right — use the subdomain only (e.g. "acme").');
+    ui.loginTenantInput.focus();
+    return;
+  }
   if (!email) {
     setLoginError('Please enter your work email.');
     return;
@@ -333,6 +397,13 @@ ui.btnLoginContinue.addEventListener('click', async () => {
   setLoginStatus('Requesting captcha…');
   ui.btnLoginContinue.disabled = true;
   try {
+    const previousTenant = await getTenantSubdomain();
+    await setTenantSubdomain(tenant);
+    // Switching workspaces invalidates any cached tokens (they were issued
+    // by the previous tenant). Drop them so we don't mix credentials.
+    if (previousTenant && previousTenant !== tenant) {
+      await Storage.clear([Storage.KEYS.ACCESS_TOKEN, Storage.KEYS.REFRESH_TOKEN, Storage.KEYS.EXPIRES_AT, Storage.KEYS.CLIENT_ID]);
+    }
     const { captchaDataUrl } = await startEmailLogin(email);
     ui.captchaImage.src = captchaDataUrl;
     ui.loginEmailDisplay.textContent = email;
@@ -430,6 +501,13 @@ ui.btnSaveToken.addEventListener('click', async () => {
   const token = ui.refreshTokenInput.value.trim();
   if (!token) return;
 
+  if (!(await getTenantSubdomain())) {
+    setLoginError('Set your Keka workspace first — switch back from "Advanced" and fill the workspace field.');
+    setLoginStep('email');
+    ui.loginTenantInput.focus();
+    return;
+  }
+
   await Storage.set({ [Storage.KEYS.REFRESH_TOKEN]: token });
 
   try {
@@ -460,7 +538,7 @@ ui.btnAutoGrab.addEventListener('click', async () => {
   try {
     const storageResult = await grabTokensFromKekaTab();
     if (storageResult === null) {
-      setLoginError('No Keka tab found. Open https://zujo.keka.com and sign in, then retry.');
+      setLoginError('No Keka tab found. Open your Keka workspace (e.g. https://acme.keka.com) and sign in, then retry.');
       setLoginStatus('');
       return;
     }
@@ -468,6 +546,7 @@ ui.btnAutoGrab.addEventListener('click', async () => {
     if (storageResult && storageResult.token) {
       const updates = { [Storage.KEYS.REFRESH_TOKEN]: storageResult.token };
       if (storageResult.clientId) updates[Storage.KEYS.CLIENT_ID] = storageResult.clientId;
+      if (storageResult.tenant) updates[Storage.KEYS.TENANT_SUBDOMAIN] = storageResult.tenant;
       if (storageResult.accessToken) {
         updates[Storage.KEYS.ACCESS_TOKEN] = storageResult.accessToken;
         const expiresAtMs = storageResult.expiresAt
@@ -642,7 +721,7 @@ async function performPunch(type) {
 
 async function loadUserData() {
     try {
-        const response = await API.request('https://zujo.keka.com/k/dashboard/api/context');
+        const response = await API.request(await tenantUrl('/k/dashboard/api/context'));
         if (response.ok) {
             let data = await response.json();
             if (data.data) {
@@ -700,7 +779,7 @@ async function loadAvatarImage(url) {
 
 async function loadAttendanceData() {
     try {
-        const response = await API.request('https://zujo.keka.com/k/attendance/api/mytime/attendance/attendancedayrequests');
+        const response = await API.request(await tenantUrl('/k/attendance/api/mytime/attendance/attendancedayrequests'));
 
         if (response.ok) {
            let data = await response.json();
@@ -786,7 +865,7 @@ function renderHistory(entries) {
 async function loadHistoryData() {
     ui.dayList.innerHTML = '<div style="text-align:center; color: var(--text-muted); font-size: 12px; padding: 16px;">Loading...</div>';
     try {
-        const response = await API.request('https://zujo.keka.com/k/attendance/api/mytime/attendance/summary');
+        const response = await API.request(await tenantUrl('/k/attendance/api/mytime/attendance/summary'));
         if (!response.ok) {
             ui.dayList.innerHTML = '<div style="text-align:center; color: var(--danger); font-size: 12px; padding: 16px;">Failed to load history</div>';
             return;

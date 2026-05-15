@@ -29,8 +29,15 @@
         <p id="login-status" class="login-status">Checking for an open Keka session…</p>
         <p id="login-error" class="login-error hidden"></p>
 
-        <!-- Step 1: email -->
+        <!-- Step 1: tenant + email -->
         <div id="login-step-email" class="login-step hidden">
+          <label class="field-label" for="login-tenant">Keka workspace</label>
+          <div class="tenant-row">
+            <input type="text" id="login-tenant" class="text-input tenant-input" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="acme">
+            <span class="tenant-suffix">.keka.com</span>
+          </div>
+          <small class="field-hint">The subdomain shown at the start of your Keka URL.</small>
+
           <label class="field-label" for="login-email">Work email</label>
           <input type="email" id="login-email" class="text-input" autocomplete="username" placeholder="you@company.com">
           <button id="btn-login-continue" class="btn btn-primary">Continue</button>
@@ -171,6 +178,10 @@
           <div class="setting-row">
             <span>Status</span>
             <span id="setting-connection" class="setting-value">—</span>
+          </div>
+          <div class="setting-row">
+            <span>Workspace</span>
+            <span id="setting-tenant" class="setting-value mono">—</span>
           </div>
           <div class="setting-row">
             <span>Client ID</span>

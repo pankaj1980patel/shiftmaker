@@ -1,6 +1,7 @@
 import { Storage } from './storage.js';
 import { refreshFromKekaTab } from './grab-tokens.js';
 import { ensureClientId } from './auth-login.js';
+import { tenantUrl } from './tenant.js';
 
 // Fired when API.request can't recover authentication — popup registers a
 // handler that shows the login UI; background just lets the failure surface.
@@ -141,7 +142,8 @@ export const API = {
       locationAddress: null
     });
 
-    return API.request("https://zujo.keka.com/k/attendance/api/mytime/attendance/webclockin", {
+    const url = await tenantUrl('/k/attendance/api/mytime/attendance/webclockin');
+    return API.request(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

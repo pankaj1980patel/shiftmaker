@@ -1,4 +1,5 @@
 import { Storage } from './storage.js';
+import { getTenantSubdomain, normalizeTenant } from './tenant.js';
 
 /**
  * Email + password + captcha login flow against Keka's identity service.
@@ -15,9 +16,13 @@ import { Storage } from './storage.js';
  */
 
 const APP = 'https://app.keka.com';
-const TENANT_ORIGIN = 'https://zujo.keka.com';
-const TENANT_SUBDOMAIN = 'zujo.keka.com';
 const SCOPE = 'openid offline_access kekahr.api hiro.api';
+
+async function requireTenant() {
+  const host = await getTenantSubdomain();
+  if (!host) throw new Error('Enter your Keka workspace (e.g. "acme") before signing in.');
+  return host;
+}
 
 function walkForClientId(obj, depth = 0) {
   if (!obj || depth > 6 || typeof obj !== 'object') return null;
@@ -45,7 +50,8 @@ export async function ensureClientId() {
   if (stored[Storage.KEYS.CLIENT_ID]) return stored[Storage.KEYS.CLIENT_ID];
 
   try {
-    const r = await fetch(`https://${TENANT_SUBDOMAIN}/assets/config/config.deploy.json`, {
+    const tenant = await requireTenant();
+    const r = await fetch(`https://${tenant}/assets/config/config.deploy.json`, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-store'
     });
@@ -97,10 +103,11 @@ function toCaptchaDataUrl(text) {
 async function ensureSubdomainCookie() {
   if (!chrome?.cookies?.set) return;
   try {
+    const tenant = await requireTenant();
     await chrome.cookies.set({
       url: 'https://app.keka.com/',
       name: 'Subdomain',
-      value: TENANT_SUBDOMAIN,
+      value: tenant,
       domain: '.keka.com',
       path: '/',
       secure: true
@@ -203,7 +210,7 @@ export async function completeLogin(password, captcha) {
   });
 
   // On failure the final URL stays on the login page; on success it follows
-  // the OIDC redirect chain and lands at zujo.keka.com.
+  // the OIDC redirect chain and lands at the tenant origin.
   if (/\/Account\/(Login|KekaLogin)/.test(loginRes.url)) {
     const html = await loginRes.text();
     const newTok = parseAntiforgery(html);
@@ -229,6 +236,8 @@ export async function completeLogin(password, captcha) {
   }
 
   // Run our own PKCE-protected authorization_code flow.
+  const tenant = await requireTenant();
+  const tenantOrigin = `https://${tenant}`;
   const clientId = await ensureClientId();
   const codeVerifier = b64url(randomBytes(32));
   const codeChallenge = b64url(await sha256(codeVerifier));
@@ -239,7 +248,7 @@ export async function completeLogin(password, captcha) {
   authorizeUrl.searchParams.set('response_type', 'code');
   authorizeUrl.searchParams.set('client_id', clientId);
   authorizeUrl.searchParams.set('state', state);
-  authorizeUrl.searchParams.set('redirect_uri', TENANT_ORIGIN);
+  authorizeUrl.searchParams.set('redirect_uri', tenantOrigin);
   authorizeUrl.searchParams.set('scope', SCOPE);
   authorizeUrl.searchParams.set('code_challenge', codeChallenge);
   authorizeUrl.searchParams.set('code_challenge_method', 'S256');
@@ -258,7 +267,7 @@ export async function completeLogin(password, captcha) {
   const tokenBody = new URLSearchParams();
   tokenBody.append('grant_type', 'authorization_code');
   tokenBody.append('code', code);
-  tokenBody.append('redirect_uri', TENANT_ORIGIN);
+  tokenBody.append('redirect_uri', tenantOrigin);
   tokenBody.append('code_verifier', codeVerifier);
   tokenBody.append('client_id', clientId);
 

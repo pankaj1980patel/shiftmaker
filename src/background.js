@@ -1,5 +1,6 @@
 import { API } from './utils/api.js';
 import { Storage, DEFAULT_AUTO_CONFIG } from './utils/storage.js';
+import { tenantUrl, getTenantSubdomain } from './utils/tenant.js';
 
 const TARGET_HOURS = 8;
 const BADGE_REFRESH_MIN = 1;
@@ -27,6 +28,30 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     // Reschedule for the next occurrence (next day at configured time)
     await scheduleAutoClockInAlarm();
     await tick();
+  }
+});
+
+// Action buttons on the "still clocked in after auto-out" reprompt.
+const NOTIF_AUTO_OUT_REPROMPT = 'auto_out_reprompt';
+chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
+  if (notificationId !== NOTIF_AUTO_OUT_REPROMPT) return;
+  chrome.notifications.clear(notificationId);
+  if (buttonIndex !== 0) return; // 1 = "I'll do it manually" — leave the user alone
+  try {
+    const res = await API.clockInOrOut('OUT');
+    if (res.ok) {
+      notifyUser('Punched Out', 'You are clocked OUT.');
+      await tick();
+    } else {
+      notifyUser('Punch Out Failed', 'Could not punch out. Please punch out manually.');
+    }
+  } catch (e) {
+    notifyUser('Punch Out Error', e.message || 'Unexpected error');
+  }
+});
+chrome.notifications.onClosed.addListener((notificationId) => {
+  if (notificationId === NOTIF_AUTO_OUT_REPROMPT) {
+    // No-op — the daily marker already prevents another prompt today.
   }
 });
 
@@ -86,7 +111,11 @@ async function fetchTodaySnapshot() {
       chrome.action.setBadgeText({ text: '' });
       return null;
     }
-    const r = await API.request('https://zujo.keka.com/k/attendance/api/mytime/attendance/attendancedayrequests');
+    // No tenant configured yet → can't fetch. Stay silent (popup will guide
+    // the user through setup).
+    if (!(await getTenantSubdomain())) return null;
+    const url = await tenantUrl('/k/attendance/api/mytime/attendance/attendancedayrequests');
+    const r = await API.request(url);
     if (!r.ok) return null;
     let d = await r.json();
     if (d.data) d = d.data;
@@ -149,6 +178,24 @@ function notifyUser(title, message) {
     iconUrl: chrome.runtime.getURL('src/icons/bone-128.png'),
     title,
     message
+  });
+}
+
+function formatThreshold(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}h ${String(m).padStart(2, '0')}m` : `${h}h`;
+}
+
+function promptReclockOut(thresholdMin) {
+  chrome.notifications.create(NOTIF_AUTO_OUT_REPROMPT, {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('src/icons/bone-128.png'),
+    title: 'Still clocked in',
+    message: `You’re past the ${formatThreshold(thresholdMin)} auto clock-out and have re-punched in. Punch out now, or handle it yourself?`,
+    buttons: [{ title: 'Punch Out Now' }, { title: "I'll do it manually" }],
+    requireInteraction: true,
+    priority: 2
   });
 }
 
@@ -239,7 +286,17 @@ async function maybeAutoClockOut(snapshot) {
   // Prevent re-firing if user manually punches back in after auto clock-out.
   const markers = await getMarkers();
   const today = todayKey();
-  if (markers.lastAutoOutDate === today) return;
+  if (markers.lastAutoOutDate === today) {
+    // Already auto-clocked-out today, but the user re-punched in and is
+    // still past the threshold. Don't silently punch them again — surface a
+    // notification with action buttons and let them decide. Throttled to one
+    // prompt per day so we don't spam every minute.
+    if (markers.lastAutoOutPromptDate !== today) {
+      await setMarker('lastAutoOutPromptDate', today);
+      promptReclockOut(cfg.outThresholdMin);
+    }
+    return;
+  }
 
   try {
     const res = await API.clockInOrOut('OUT');

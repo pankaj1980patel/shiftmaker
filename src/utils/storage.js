@@ -16,7 +16,7 @@ const KEYS = {
 
 export const DEFAULT_AUTO_CONFIG = {
   outEnabled: false,
-  outThresholdMin: 570, // 9h 30m
+  outThresholdMin: 1110, // 18:30 local time (minutes since midnight)
   inEnabled: false,
   inTime: '09:30' // 24h HH:MM in user's local time
 };

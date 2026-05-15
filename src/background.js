@@ -181,10 +181,10 @@ function notifyUser(title, message) {
   });
 }
 
-function formatThreshold(min) {
+function formatMinutesOfDay(min) {
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return m ? `${h}h ${String(m).padStart(2, '0')}m` : `${h}h`;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 function promptReclockOut(thresholdMin) {
@@ -192,7 +192,7 @@ function promptReclockOut(thresholdMin) {
     type: 'basic',
     iconUrl: chrome.runtime.getURL('src/icons/bone-128.png'),
     title: 'Still clocked in',
-    message: `You’re past the ${formatThreshold(thresholdMin)} auto clock-out and have re-punched in. Punch out now, or handle it yourself?`,
+    message: `It's past your ${formatMinutesOfDay(thresholdMin)} auto clock-out and you've re-punched in. Punch out now, or handle it yourself?`,
     buttons: [{ title: 'Punch Out Now' }, { title: "I'll do it manually" }],
     requireInteraction: true,
     priority: 2
@@ -280,8 +280,12 @@ async function maybeAutoClockOut(snapshot) {
   if (!cfg.outEnabled) return;
   if (!snapshot.isClockedIn) return;
 
-  const thresholdMs = (cfg.outThresholdMin || DEFAULT_AUTO_CONFIG.outThresholdMin) * 60 * 1000;
-  if (snapshot.durationMs < thresholdMs) return;
+  // outThresholdMin is a wall-clock time stored as minutes-since-midnight
+  // (so 1080 = 18:00 local). Fire once we cross that time today.
+  const thresholdMin = cfg.outThresholdMin || DEFAULT_AUTO_CONFIG.outThresholdMin;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  if (nowMin < thresholdMin) return;
 
   // Prevent re-firing if user manually punches back in after auto clock-out.
   const markers = await getMarkers();
@@ -302,9 +306,7 @@ async function maybeAutoClockOut(snapshot) {
     const res = await API.clockInOrOut('OUT');
     if (res.ok) {
       await setMarker('lastAutoOutDate', today);
-      const h = Math.floor(cfg.outThresholdMin / 60);
-      const m = cfg.outThresholdMin % 60;
-      notifyUser('Auto Clock-Out', `You crossed ${h}h ${m.toString().padStart(2, '0')}m today — punched OUT automatically.`);
+      notifyUser('Auto Clock-Out', `Reached your ${formatMinutesOfDay(cfg.outThresholdMin)} clock-out time — punched OUT automatically.`);
     } else {
       notifyUser('Auto Clock-Out Failed', 'Could not punch out automatically. Please punch out manually.');
     }

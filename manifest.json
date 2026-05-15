@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "ShiftMate",
-    "version": "1.1.0",
-    "description": "Punch in/out, timed breaks with auto clock-in, scheduled auto clock-in & duration-based auto clock-out, daily history, and a live progress badge for your 8-hour goal.",
+    "version": "1.2.0",
+    "description": "Keka attendance companion: clock in/out, timed breaks, scheduled auto clock-in/out, multi-tenant, live 8-hour progress badge.",
     "permissions": [
         "storage",
         "alarms",

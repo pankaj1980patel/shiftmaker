@@ -9,7 +9,15 @@ const KEYS = {
   CLIENT_ID: 'client_id',
   USER_PROFILE: 'user_profile',
   AUTO_CONFIG: 'auto_config',
+  AUTO_MARKERS: 'auto_markers',
   ACTIVE_BREAK: 'active_break'
+};
+
+export const DEFAULT_AUTO_CONFIG = {
+  outEnabled: false,
+  outThresholdMin: 570, // 9h 30m
+  inEnabled: false,
+  inTime: '09:30' // 24h HH:MM in user's local time
 };
 
 export const Storage = {

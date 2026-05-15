@@ -1,4 +1,4 @@
-import { Storage } from './utils/storage.js';
+import { Storage, DEFAULT_AUTO_CONFIG } from './utils/storage.js';
 import { API, onAuthRequired } from './utils/api.js';
 import { grabTokensFromKekaTab } from './utils/grab-tokens.js';
 import { startEmailLogin, completeLogin, refreshCaptcha, cancelLogin } from './utils/auth-login.js';
@@ -53,6 +53,13 @@ const ui = {
   settingConnection: document.getElementById('setting-connection'),
   settingClientId: document.getElementById('setting-clientid'),
   btnReset: document.getElementById('btn-reset'),
+  autoOutEnabled: document.getElementById('auto-out-enabled'),
+  autoOutThreshold: document.getElementById('auto-out-threshold'),
+  autoOutRow: document.getElementById('auto-out-row'),
+  autoInEnabled: document.getElementById('auto-in-enabled'),
+  autoInTime: document.getElementById('auto-in-time'),
+  autoInRow: document.getElementById('auto-in-row'),
+  automationStatus: document.getElementById('automation-status'),
   breakIdle: document.getElementById('break-idle'),
   breakActive: document.getElementById('break-active'),
   breakReturnTime: document.getElementById('break-return-time'),
@@ -82,7 +89,7 @@ ui.tabs.forEach(tab => {
 });
 
 async function loadSettingsData() {
-  const data = await Storage.get([Storage.KEYS.REFRESH_TOKEN, Storage.KEYS.CLIENT_ID]);
+  const data = await Storage.get([Storage.KEYS.REFRESH_TOKEN, Storage.KEYS.CLIENT_ID, Storage.KEYS.AUTO_CONFIG]);
   const hasToken = !!data[Storage.KEYS.REFRESH_TOKEN];
   const clientId = data[Storage.KEYS.CLIENT_ID];
 
@@ -91,7 +98,71 @@ async function loadSettingsData() {
 
   ui.settingClientId.textContent = clientId || 'default (built-in)';
   ui.settingClientId.title = clientId || '';
+
+  const cfg = { ...DEFAULT_AUTO_CONFIG, ...(data[Storage.KEYS.AUTO_CONFIG] || {}) };
+  ui.autoOutEnabled.checked = !!cfg.outEnabled;
+  ui.autoOutThreshold.value = minutesToHHMM(cfg.outThresholdMin);
+  ui.autoInEnabled.checked = !!cfg.inEnabled;
+  ui.autoInTime.value = cfg.inTime;
+  updateAutomationRowState();
 }
+
+function minutesToHHMM(min) {
+  const total = Math.max(0, Math.min(23 * 60 + 59, parseInt(min, 10) || 0));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function hhmmToMinutes(hhmm) {
+  const [h, m] = String(hhmm || '').split(':');
+  const hh = parseInt(h, 10);
+  const mm = parseInt(m, 10);
+  if (isNaN(hh) || isNaN(mm)) return null;
+  return hh * 60 + mm;
+}
+
+function updateAutomationRowState() {
+  ui.autoOutRow.classList.toggle('disabled', !ui.autoOutEnabled.checked);
+  ui.autoInRow.classList.toggle('disabled', !ui.autoInEnabled.checked);
+  ui.autoOutThreshold.disabled = !ui.autoOutEnabled.checked;
+  ui.autoInTime.disabled = !ui.autoInEnabled.checked;
+}
+
+let autoStatusTimer = null;
+function flashAutomationStatus(msg) {
+  ui.automationStatus.textContent = msg;
+  ui.automationStatus.classList.remove('hidden');
+  if (autoStatusTimer) clearTimeout(autoStatusTimer);
+  autoStatusTimer = setTimeout(() => ui.automationStatus.classList.add('hidden'), 1800);
+}
+
+async function saveAutoConfig() {
+  const outMin = hhmmToMinutes(ui.autoOutThreshold.value);
+  const inTime = ui.autoInTime.value || DEFAULT_AUTO_CONFIG.inTime;
+  const cfg = {
+    outEnabled: !!ui.autoOutEnabled.checked,
+    outThresholdMin: outMin === null || outMin < 1 ? DEFAULT_AUTO_CONFIG.outThresholdMin : outMin,
+    inEnabled: !!ui.autoInEnabled.checked,
+    inTime
+  };
+  await Storage.set({ [Storage.KEYS.AUTO_CONFIG]: cfg });
+  // Nudge the background to reschedule the auto clock-in alarm immediately.
+  try { await chrome.runtime.sendMessage({ type: 'auto_config_changed' }); } catch (_) {}
+  flashAutomationStatus('Saved');
+}
+
+function bindAutomationInputs() {
+  const onChange = () => {
+    updateAutomationRowState();
+    saveAutoConfig();
+  };
+  ui.autoOutEnabled.addEventListener('change', onChange);
+  ui.autoInEnabled.addEventListener('change', onChange);
+  ui.autoOutThreshold.addEventListener('change', saveAutoConfig);
+  ui.autoInTime.addEventListener('change', saveAutoConfig);
+}
+bindAutomationInputs();
 
 ui.btnReset.addEventListener('click', async () => {
   if (!confirm('Reset everything? This will clear all stored data — tokens, client ID, active break — and return to login.')) return;

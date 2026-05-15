@@ -447,6 +447,55 @@ body {
   margin-top: 2px;
 }
 
+/* Automation card */
+.automation-card .setting-row {
+  align-items: center;
+  gap: 12px;
+}
+.automation-card .setting-row.indent {
+  padding-left: 8px;
+}
+.automation-card .setting-row.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.automation-card .setting-label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.automation-card .setting-label > span {
+  font-weight: 500;
+  color: var(--text-main);
+}
+.automation-card .setting-label > small {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.time-input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+.time-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.15);
+}
+.automation-status {
+  margin: 8px 0 0 0;
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 600;
+}
+
 /* Toggle Switch */
 .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
 .switch input { opacity: 0; width: 0; height: 0; }

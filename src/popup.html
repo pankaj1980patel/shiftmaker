@@ -178,6 +178,42 @@
           </div>
         </div>
 
+        <div class="card automation-card">
+          <h4>Automation</h4>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Auto Clock-Out</span>
+              <small>Punches you OUT once daily duration crosses the threshold.</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-out-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row indent" id="auto-out-row">
+            <span>Threshold (HH:MM)</span>
+            <input type="time" id="auto-out-threshold" class="time-input" step="60">
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Auto Clock-In</span>
+              <small>Punches you IN at this time, only if you have zero punches for the day.</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-in-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row indent" id="auto-in-row">
+            <span>Clock-in time</span>
+            <input type="time" id="auto-in-time" class="time-input" step="60">
+          </div>
+
+          <p id="automation-status" class="automation-status hidden"></p>
+        </div>
+
         <div class="card danger-zone">
           <h4>Reset</h4>
           <p class="hint">Clears stored tokens, client ID, active break, and badge. You will need to reconnect.</p>

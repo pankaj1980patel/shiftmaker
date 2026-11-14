@@ -201,6 +201,7 @@ async function loadSettingsData() {
 
   ui.settingTenant.textContent = tenant || 'not set';
   ui.settingVersion.textContent = chrome.runtime.getManifest?.().version || '—';
+  prefillBugReport();
   ui.settingTenant.title = tenant || '';
 
 
@@ -438,6 +439,27 @@ function setLoginError(msg) {
   }
   ui.loginError.classList.remove('hidden');
   ui.loginError.textContent = msg;
+}
+
+// Pre-fill the GitHub issue with version + browser (nothing personal) so a
+// bug report is one click and the frog has what it needs to debug.
+function prefillBugReport() {
+  const link = document.getElementById('about-bug');
+  if (!link) return;
+  const version = chrome.runtime.getManifest?.().version || '?';
+  const chromeVer = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '?';
+  const body = [
+    '**What happened?**', '', '',
+    '**What did you expect?**', '', '',
+    '**Steps to reproduce**', '1. ', '',
+    '---',
+    `ShiftMate ${version} · Chrome ${chromeVer} · ${navigator.platform || '?'}`,
+    '_Please don’t paste tokens, passwords or colleagues’ names._'
+  ].join('\n');
+  const url = new URL('https://github.com/pankaj1980patel/shiftmaker/issues/new');
+  url.searchParams.set('labels', 'bug');
+  url.searchParams.set('body', body);
+  link.href = url.toString();
 }
 
 async function trySilentAutoGrab() {

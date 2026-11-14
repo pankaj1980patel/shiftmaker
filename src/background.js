@@ -84,7 +84,9 @@ const NOTIF_BIRTHDAYS = 'birthdays_today';
 const NOTIF_APPROVALS = 'pending_approvals';
 const NOTIF_ROUTES = {
   [NOTIF_BIRTHDAYS]: KEKA_ROUTES.dashboard,
-  [NOTIF_APPROVALS]: KEKA_ROUTES.approvals
+  [NOTIF_APPROVALS]: KEKA_ROUTES.approvals,
+  // Firefox only (no buttons there): clicking the reprompt opens attendance.
+  [NOTIF_AUTO_OUT_REPROMPT]: KEKA_ROUTES.attendance
 };
 chrome.notifications.onClicked.addListener(async (notificationId) => {
   const route = NOTIF_ROUTES[notificationId];
@@ -257,15 +259,24 @@ function notifyUser(title, message) {
   });
 }
 
+// Firefox notifications have no action buttons (passing them throws), so
+// there the reprompt is a plain notification that opens Keka when clicked.
+const NOTIF_BUTTONS = !/Firefox\//.test(navigator.userAgent);
+
 function promptReclockOut(thresholdMin) {
+  const past = `It's past your ${minutesToHHMM(thresholdMin)} clock-out and you punched back in. Workaholic much?`;
   chrome.notifications.create(NOTIF_AUTO_OUT_REPROMPT, {
     type: 'basic',
     iconUrl: chrome.runtime.getURL('src/icons/smily-pumpkin-128.png'),
     title: 'Still here? 👀',
-    message: `It's past your ${minutesToHHMM(thresholdMin)} clock-out and you punched back in. Workaholic much? Punch out now, or handle it yourself?`,
-    buttons: [{ title: 'Punch me out 🏃' }, { title: "I'm on it, leave me be" }],
-    requireInteraction: true,
-    priority: 2
+    ...(NOTIF_BUTTONS ? {
+      message: `${past} Punch out now, or handle it yourself?`,
+      buttons: [{ title: 'Punch me out 🏃' }, { title: "I'm on it, leave me be" }],
+      requireInteraction: true,
+      priority: 2
+    } : {
+      message: `${past} Punch out from ShiftMate's toolbar button, or click here to open Keka.`
+    })
   });
 }
 

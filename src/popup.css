@@ -877,3 +877,24 @@ input:checked + .slider:before { transform: translateX(14px); }
 .btn-break { white-space: nowrap; }
 /* Original meme-frog punch badges (icons/frog-in.svg, icons/frog-out.svg) */
 .punch-icon img { display: block; width: 30px; height: 30px; }
+
+/* --- About card: out of the way at the bottom of Settings --- */
+.about-tagline { font-size: 12px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4; }
+.about-links { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.about-link {
+  display: block; padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-weight: 600; color: var(--text-main); text-decoration: none; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.about-link:hover { background: var(--bg); }
+.about-link:focus-visible, .about-maker a:focus-visible { outline: 2px solid var(--primary, #ff9800); outline-offset: 1px; }
+.about-link-primary { border-color: rgba(239, 83, 80, 0.4); color: #c62828; }
+.about-link-primary:hover { background: rgba(239, 83, 80, 0.08); }
+.about-maker {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted);
+}
+.about-maker strong { color: var(--text-main); }
+.about-maker-links { display: flex; gap: 10px; }
+.about-maker a { color: var(--text-main); text-decoration: none; font-weight: 600; }
+.about-maker a:hover { text-decoration: underline; }

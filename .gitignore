@@ -13,3 +13,6 @@ Untitled-*
 
 # Local-only publishing notes (Web Store copy, privacy answers, release steps)
 guide/
+
+# Build output
+dist/

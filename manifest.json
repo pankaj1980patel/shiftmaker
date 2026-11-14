@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "ShiftMate",
-    "version": "1.3.1",
+    "version": "1.3.2",
     "description": "Keka attendance companion: punch in/out, breaks, auto clock-in/out that skips days off, OTP sign-in, leave & birthday reminders.",
     "permissions": [
         "storage",

@@ -4,6 +4,10 @@ A browser-toolbar companion for the [Keka](https://www.keka.com/) HR platform. T
 
 Built as a Manifest V3 Chrome extension. Not affiliated with Keka HR Technologies Pvt Ltd.
 
+**[Website](https://pankaj1980patel.github.io/shiftmaker/)** · **[Chrome Web Store](https://chromewebstore.google.com/detail/kjglhonepkcmbcapgbnnihoihhanhdee)** · **[Releases](https://github.com/pankaj1980patel/shiftmaker/releases/latest)**
+
+![ShiftMate popup: punch in and out in one tap](screenshots/store-v1.3.0/01-one-tap-punch.png)
+
 > **Keywords**: Keka, attendance, timesheet, time tracking, clock in / clock out, punch in / punch out, auto clock-in, auto clock-out, work hours, leave balance, holidays, birthdays, Chrome extension.
 
 ## Features
@@ -56,7 +60,7 @@ docs/
 
 ## Privacy
 
-All data stays in your own Chrome profile; sign-in tokens are kept on this device only (`chrome.storage.local`), settings sync with your Chrome profile. The extension talks only to Keka's own servers (`*.keka.com`). When your company requires a location for web clock-in, your device location is sent to Keka with each punch, as Keka's own web app does. See the [privacy policy](https://pankaj1980patel.github.io/shiftmaker/).
+All data stays in your own Chrome profile; sign-in tokens are kept on this device only (`chrome.storage.local`), settings sync with your Chrome profile. The extension talks only to Keka's own servers (`*.keka.com`). When your company requires a location for web clock-in, your device location is sent to Keka with each punch, as Keka's own web app does. See the [privacy policy](https://pankaj1980patel.github.io/shiftmaker/privacy.html).
 
 ## License
 

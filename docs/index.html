@@ -1,241 +1,345 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ShiftMate — Privacy Policy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMate: Keka attendance in one click</title>
+  <meta name="description" content="Never forget to punch in or out again. ShiftMate puts Keka attendance one click away in your Chrome toolbar, with autopilot clock-in/out, self-ending breaks and your whole week at a glance.">
+  <meta property="og:title" content="ShiftMate: Keka attendance in one click">
+  <meta property="og:description" content="Punch in with one tap, put attendance on autopilot, and let breaks end themselves.">
+  <meta property="og:image" content="https://pankaj1980patel.github.io/shiftmaker/assets/01-one-tap-punch.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/pumpkin-128.png">
   <style>
     :root {
-      --bg: #faf9f7;
+      --bg: #f7f6fb;
       --surface: #ffffff;
-      --text: #1f2024;
-      --muted: #5f6470;
-      --border: #e6e3dc;
+      --text: #1f2340;
+      --muted: #555a74;
+      --border: #e4e3ef;
       --primary: #5c6bc0;
-      --code-bg: #f3f1ec;
+      --primary-ink: #ffffff;
+      --accent: #ff9f43;
+      --tint: #eef0fb;
+      --shadow: 0 18px 50px rgba(40, 44, 80, .14);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #15161a;
-        --surface: #1c1e23;
-        --text: #e9eaee;
-        --muted: #9aa0aa;
-        --border: #2a2d34;
-        --primary: #7986cb;
-        --code-bg: #23262d;
+        --bg: #14151b;
+        --surface: #1c1e26;
+        --text: #eceef6;
+        --muted: #a3a8bd;
+        --border: #2b2e3a;
+        --primary: #8e9ae0;
+        --primary-ink: #14151b;
+        --tint: #20233a;
+        --shadow: 0 18px 50px rgba(0, 0, 0, .45);
       }
     }
     * { box-sizing: border-box; }
-    html, body {
+    html { scroll-behavior: smooth; }
+    body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       line-height: 1.55;
     }
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 48px 24px 96px;
-    }
-    header { margin-bottom: 32px; }
-    h1 {
-      margin: 0 0 4px;
-      font-size: 28px;
-      letter-spacing: -0.01em;
-    }
-    header .subtitle {
-      color: var(--muted);
-      font-size: 14px;
-    }
-    h2 {
-      margin-top: 36px;
-      margin-bottom: 8px;
-      font-size: 18px;
-      letter-spacing: -0.005em;
-    }
-    p, li { font-size: 15px; }
-    ul { padding-left: 22px; }
-    li { margin-bottom: 6px; }
     a { color: var(--primary); }
-    code {
-      background: var(--code-bg);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    img { max-width: 100%; display: block; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 750; font-size: 19px; color: var(--primary); text-decoration: none; }
+    .logo img { width: 32px; height: 32px; }
+    nav ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; align-items: center; }
+    nav ul a { color: var(--muted); text-decoration: none; font-size: 15px; }
+    nav ul a:hover { color: var(--text); }
+    @media (max-width: 720px) { nav ul li.hide-sm { display: none; } }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 12px; font-weight: 650; font-size: 16px; text-decoration: none; border: 1px solid transparent; transition: transform .12s ease, box-shadow .12s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--primary); color: var(--primary-ink); box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 35%, transparent); }
+    .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+    .btn-sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+
+    /* Hero */
+    .hero { padding: 72px 0 40px; text-align: center; }
+    .pill { display: inline-block; background: var(--tint); color: var(--primary); font-weight: 650; font-size: 14px; padding: 6px 14px; border-radius: 999px; margin-bottom: 22px; }
+    h1 { font-size: clamp(38px, 6vw, 64px); line-height: 1.05; letter-spacing: -1.5px; margin: 0 auto 20px; max-width: 860px; }
+    h1 em { font-style: normal; color: var(--primary); }
+    .lead { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 680px; margin: 0 auto 32px; }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .fine { color: var(--muted); font-size: 14px; margin-top: 14px; }
+    .hero-shot { margin: 52px auto 0; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); max-width: 1000px; }
+
+    /* Time saved strip */
+    .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 56px auto 0; max-width: 900px; }
+    .strip div { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; text-align: center; }
+    .strip b { display: block; font-size: 28px; color: var(--primary); letter-spacing: -.5px; }
+    .strip span { color: var(--muted); font-size: 15px; }
+    @media (max-width: 720px) { .strip { grid-template-columns: 1fr; } }
+
+    /* Sections */
+    section { padding: 72px 0; }
+    .section-head { text-align: center; max-width: 680px; margin: 0 auto 44px; }
+    h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -1px; line-height: 1.12; margin: 0 0 12px; }
+    .section-head p { color: var(--muted); font-size: 18px; margin: 0; }
+
+    /* Feature rows */
+    .feature { display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; margin-bottom: 72px; }
+    .feature:nth-child(even) { grid-template-columns: 7fr 5fr; }
+    .feature:nth-child(even) .feature-text { order: 2; }
+    .feature-text .emoji { font-size: 34px; }
+    .feature-text h3 { font-size: 28px; letter-spacing: -.6px; margin: 8px 0 10px; line-height: 1.15; }
+    .feature-text p { color: var(--muted); font-size: 17px; margin: 0 0 14px; }
+    .feature-text ul { margin: 0; padding: 0; list-style: none; }
+    .feature-text li { padding-left: 28px; position: relative; margin-bottom: 8px; font-size: 16px; }
+    .feature-text li::before { content: "✓"; position: absolute; left: 0; color: var(--primary); font-weight: 800; }
+    .feature img { border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    @media (max-width: 860px) {
+      .feature, .feature:nth-child(even) { grid-template-columns: 1fr; gap: 22px; }
+      .feature:nth-child(even) .feature-text { order: 0; }
     }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-top: 16px;
-    }
-    .footer {
-      margin-top: 56px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--muted);
-    }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step; }
+    .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px; position: relative; }
+    .step::before { counter-increment: step; content: counter(step); width: 36px; height: 36px; border-radius: 50%; background: var(--tint); color: var(--primary); font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .step h3 { margin: 0 0 6px; font-size: 19px; }
+    .step p { margin: 0; color: var(--muted); font-size: 15.5px; }
+    @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+
+    /* Extras grid */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+    .card .emoji { font-size: 26px; }
+    .card h3 { margin: 8px 0 6px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Privacy band */
+    .band { background: var(--tint); border-radius: 22px; padding: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+    .band h2 { margin-bottom: 10px; }
+    .band p { color: var(--muted); margin: 0 0 12px; font-size: 17px; }
+    .band ul { margin: 0; padding: 0; list-style: none; }
+    .band li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; font-size: 15.5px; }
+    @media (max-width: 860px) { .band { grid-template-columns: 1fr; padding: 28px; } }
+
+    /* FAQ */
+    details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; max-width: 820px; margin-left: auto; margin-right: auto; }
+    summary { cursor: pointer; font-weight: 650; font-size: 17px; }
+    details p { color: var(--muted); margin: 10px 0 0; }
+
+    /* Final CTA + footer */
+    .final { text-align: center; }
+    .final img { width: 84px; height: 84px; margin: 0 auto 16px; }
+    footer { border-top: 1px solid var(--border); padding: 30px 0 40px; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    footer a { color: var(--muted); }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>ShiftMate — Privacy Policy</h1>
-      <div class="subtitle">Last updated: 14 November 2026</div>
-    </header>
 
-    <p>
-      ShiftMate is a browser extension that helps users of the
-      <a href="https://www.keka.com/">Keka</a> HR platform clock in and out,
-      take timed breaks, and view their attendance from the browser toolbar.
-      This page explains exactly what data the extension touches and where
-      that data lives.
-    </p>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="assets/pumpkin-128.png" alt="">ShiftMate</a>
+    <ul>
+      <li class="hide-sm"><a href="#features">Features</a></li>
+      <li class="hide-sm"><a href="#how">How it works</a></li>
+      <li class="hide-sm"><a href="#privacy">Privacy</a></li>
+      <li class="hide-sm"><a href="#faq">FAQ</a></li>
+      <li><a class="btn btn-primary btn-sm" href="https://chromewebstore.google.com/detail/kjglhonepkcmbcapgbnnihoihhanhdee">Add to Chrome</a></li>
+    </ul>
+  </div>
+</nav>
 
-    <p>
-      <strong>Short version:</strong> ShiftMate has no servers. Everything
-      runs locally in your browser, and the only network destination is
-      Keka itself. Your data is not collected, sold, shared, or transmitted
-      to the extension's author.
-    </p>
+<header class="hero">
+  <div class="wrap">
+    <span class="pill">🎃 Free Chrome extension for Keka users</span>
+    <h1>Never forget to <em>punch in</em> or <em>out</em> again</h1>
+    <p class="lead">ShiftMate puts your Keka attendance one click away in the Chrome toolbar. Tap once, or let autopilot do it for you, and get back to actual work.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/kjglhonepkcmbcapgbnnihoihhanhdee">Add to Chrome, it’s free</a>
+      <a class="btn btn-ghost" href="#features">See what it does ↓</a>
+    </div>
+    <p class="fine">Works with any company on <code>*.keka.com</code>. No account, no setup wizard.</p>
+    <div class="hero-shot"><img src="assets/01-one-tap-punch.jpg" alt="ShiftMate popup opened from the Chrome toolbar, showing today's hours and the Punch In and Punch Out buttons" width="1280" height="800"></div>
 
-    <h2>1. Data the extension handles</h2>
-    <div class="card">
-      <p>To do its job, ShiftMate handles the following pieces of data, all
-      of which originate from your interaction with Keka:</p>
+    <div class="strip">
+      <div><b>1 tap</b><span>to punch in or out from any tab</span></div>
+      <div><b>0 taps</b><span>with autopilot clock-in and clock-out</span></div>
+      <div><b>0 missed</b><span>punch-backs after a break</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Attendance that takes care of itself</h2>
+      <p>Everything you open Keka for, without opening Keka.</p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <div class="emoji">🤖</div>
+        <h3>Put attendance on autopilot</h3>
+        <p>Set your times once. ShiftMate clocks you in and out, even on the days you forget.</p>
+        <ul>
+          <li>Auto clock-in, only if you haven’t punched yet</li>
+          <li>Auto clock-out at the end of your day</li>
+          <li>Skips holidays, weekends and leave automatically</li>
+          <li>One click copies your times from your Keka shift</li>
+        </ul>
+      </div>
+      <img src="assets/02-autopilot.jpg" alt="Autopilot settings with auto clock-in, auto clock-out and skip days off" loading="lazy" width="1280" height="800">
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <div class="emoji">☕</div>
+        <h3>Breaks that end themselves</h3>
+        <p>Tap 30, 45 or 60 minutes. ShiftMate punches you out, counts down and punches you back in. You just enjoy the break.</p>
+        <ul>
+          <li>Any length you like</li>
+          <li>Optional daily auto lunch break</li>
+          <li>A notification confirms you’re back in</li>
+        </ul>
+      </div>
+      <img src="assets/03-breaks.jpg" alt="A break counting down with automatic punch back in" loading="lazy" width="1280" height="800">
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <div class="emoji">🗓️</div>
+        <h3>Your whole week at a glance</h3>
+        <p>The answers you usually dig through Keka for, in one place.</p>
+        <ul>
+          <li>Leave balances and upcoming holidays</li>
+          <li>Pending approvals and unread notifications</li>
+          <li>Who’s out of office today</li>
+        </ul>
+      </div>
+      <img src="assets/04-week-at-a-glance.jpg" alt="Overview tab with week strip, inbox counts and leave balances" loading="lazy" width="1280" height="800">
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <div class="emoji">📜</div>
+        <h3>Know your hours instantly</h3>
+        <p>Your recent workdays, arrival times and totals, measured against your real shift target.</p>
+        <ul>
+          <li>Last 3 days in one view</li>
+          <li>Total and daily average</li>
+          <li>Weekends and leave clearly marked</li>
+        </ul>
+      </div>
+      <img src="assets/05-hours.jpg" alt="History tab with the last three days and totals" loading="lazy" width="1280" height="800">
+    </div>
+  </div>
+</section>
+
+<section id="how" style="padding-top: 0">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Up and running in a minute</h2>
+      <p>No tokens to copy, no forms to fill.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Add to Chrome</h3><p>Install from the Chrome Web Store and pin the pumpkin to your toolbar.</p></div>
+      <div class="step"><h3>Sign in once</h3><p>Already logged in to Keka in a tab? ShiftMate picks it up. Otherwise sign in from the popup, OTP included.</p></div>
+      <div class="step"><h3>Tap, or don’t</h3><p>Punch with one tap, or switch on autopilot and stop thinking about attendance.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top: 0">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Little things that save your day</h2>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="emoji">🎂</div><h3>Birthday reminders</h3><p>See who’s celebrating and copy a wish from your own template in one click.</p></div>
+      <div class="card"><div class="emoji">🔔</div><h3>Helpful nudges</h3><p>Know when an auto punch happened or needs you, and when requests await approval. Each can be turned off.</p></div>
+      <div class="card"><div class="emoji">🎯</div><h3>Shift-aware</h3><p>Progress and targets follow your actual Keka shift, not a generic 8 hours.</p></div>
+      <div class="card"><div class="emoji">📍</div><h3>Location-ready</h3><p>If your company requires a location for web clock-in, your real location goes with the punch, just like Keka’s web app.</p></div>
+      <div class="card"><div class="emoji">🔐</div><h3>OTP sign-in</h3><p>Works with Keka’s two-step verification by email or mobile.</p></div>
+      <div class="card"><div class="emoji">🐸</div><h3>Actually fun</h3><p>Frog buttons, meme-flavoured messages and a pumpkin. Attendance doesn’t have to be boring.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy" style="padding-top: 0">
+  <div class="wrap">
+    <div class="band">
+      <div>
+        <h2>Private by design</h2>
+        <p>ShiftMate talks only to Keka. There are no servers of ours in between, and nothing about you is collected.</p>
+        <a href="privacy.html">Read the full privacy policy →</a>
+      </div>
       <ul>
-        <li>
-          <strong>OIDC tokens</strong> (access token, refresh token, expiry,
-          OIDC client_id) — issued by Keka's identity server to authenticate
-          your API calls.
-        </li>
-        <li>
-          <strong>Email and password</strong> — only when you choose to sign
-          in through the extension's built-in login form. They are sent
-          directly to Keka's login endpoint (<code>app.keka.com</code>) and
-          are never retained by the extension after the request completes.
-        </li>
-        <li>
-          <strong>Captcha response and one-time code (OTP)</strong> —
-          submitted to Keka when it asks for them during sign-in. Not
-          retained.
-        </li>
-        <li>
-          <strong>Device location</strong> (latitude and longitude) — read
-          from Chrome only at the moment you punch in or out, and only when
-          your company's Keka attendance policy requires a location for web
-          clock-in. It is sent to Keka with that punch, exactly as Keka's own
-          web app does, and is never stored or sent anywhere else. If
-          location is unavailable, the punch is sent without one.
-        </li>
-        <li>
-          <strong>Attendance data</strong> (today's punches, recent
-          workdays, totals) — fetched from Keka on demand to render the
-          popup; not stored beyond what the popup needs to display.
-        </li>
-        <li>
-          <strong>Work-calendar and team data</strong> (your shift, holidays,
-          weekly offs, leave balances, pending-approval and notification
-          counts, colleagues' names and birthdays, who is on leave today) —
-          fetched from your Keka dashboard to show in the popup, skip auto
-          clock-in on days off and send reminders. Cached briefly in memory
-          for the browser session; never sent anywhere except back to Keka.
-        </li>
-        <li>
-          <strong>Your settings</strong> (auto clock-in/out times, break
-          preferences, reminder toggles, birthday-wish template).
-        </li>
-        <li>
-          <strong>Active break state</strong> (start time, return time,
-          duration) — stored locally so the countdown survives the popup
-          closing.
-        </li>
-        <li>
-          <strong>Keka tenant subdomain</strong> — read from the
-          <code>Subdomain</code> cookie Keka itself sets on
-          <code>.keka.com</code>, so the extension calls the correct API
-          host.
-        </li>
+        <li>🚫 No analytics, tracking or ads</li>
+        <li>💻 Sign-in stays on this device; only settings sync</li>
+        <li>🔗 Connects only to <code>*.keka.com</code></li>
+        <li>📦 All code ships in the extension, no remote scripts</li>
       </ul>
     </div>
+  </div>
+</section>
 
-    <h2>2. Where this data is stored</h2>
-    <p>
-      Sign-in tokens, the active break and other device-specific state are
-      kept in <code>chrome.storage.local</code> on this computer only.
-      Your settings and Keka subdomain are kept in
-      <code>chrome.storage.sync</code> so they follow your Chrome profile.
-      Short-lived API caches live in <code>chrome.storage.session</code> and
-      are cleared when the browser closes. Nothing is written to any
-      external database, file, or remote server operated by the extension
-      author.
-    </p>
+<section id="faq" style="padding-top: 0">
+  <div class="wrap">
+    <div class="section-head"><h2>Questions</h2></div>
+    <details>
+      <summary>Does it work with my company’s Keka?</summary>
+      <p>Yes, if you sign in to Keka at an address like <code>yourcompany.keka.com</code>. ShiftMate uses the same Keka APIs as the web app, under your own account.</p>
+    </details>
+    <details>
+      <summary>Will autopilot punch me in on a holiday or while I’m on leave?</summary>
+      <p>No. With “Skip days off” on (the default), auto clock-in skips holidays, weekly offs and full-day leave. It also never punches in if you’ve already punched that day.</p>
+    </details>
+    <details>
+      <summary>What if my laptop is asleep at clock-in time?</summary>
+      <p>If Chrome wakes within an hour, ShiftMate catches up. Any later and it skips the day and tells you, so you’re never punched in hours late.</p>
+    </details>
+    <details>
+      <summary>I use two laptops. Anything to know?</summary>
+      <p>Your settings sync across Chrome profiles, so keep autopilot switched on for one laptop only. Otherwise both could punch.</p>
+    </details>
+    <details>
+      <summary>We punch in with an office fingerprint or card reader.</summary>
+      <p>ShiftMate can’t see those punches, so leave Auto Clock-In off. One-tap punching, breaks and everything else still work.</p>
+    </details>
+    <details>
+      <summary>Is it made by Keka?</summary>
+      <p>No. ShiftMate is an independent, free companion built by a Keka user. It isn’t affiliated with Keka HR Technologies Pvt Ltd.</p>
+    </details>
+  </div>
+</section>
 
-    <h2>3. Where this data is sent</h2>
-    <p>The extension contacts the following hosts, all owned by Keka:</p>
-    <ul>
-      <li><code>https://app.keka.com</code> — OIDC authentication endpoints (<code>/connect/authorize</code>, <code>/connect/token</code>, <code>/Account/Login</code>, <code>/captcha</code>).</li>
-      <li><code>https://&lt;your-subdomain&gt;.keka.com</code> — attendance APIs (clock in/out, daily and historical punch data, user profile, deploy config).</li>
-    </ul>
-    <p>
-      No other host is contacted. No data is sent to the author, to
-      analytics services, to advertising networks, or to any third party.
-    </p>
-
-    <h2>4. What the extension does <em>not</em> do</h2>
-    <ul>
-      <li>It does not run any analytics, telemetry, crash reporting, or remote logging.</li>
-      <li>It does not load or execute remote code. All extension code is bundled in the package.</li>
-      <li>It does not read tabs, cookies, or storage from non-Keka domains.</li>
-      <li>It does not sell, share, or transfer your data to anyone.</li>
-      <li>It does not display advertising and is not monetized.</li>
-    </ul>
-
-    <h2>5. Permissions, briefly explained</h2>
-    <ul>
-      <li><code>storage</code> — keep tokens, settings and break state across popup opens.</li>
-      <li><code>alarms</code> — run scheduled auto clock-in/out and breaks, and refresh the toolbar badge once a minute.</li>
-      <li><code>notifications</code> — tell you about automatic punches, birthdays and requests awaiting your approval.</li>
-      <li><code>scripting</code> — read the sign-in session from an open Keka tab so you can sign in without copying tokens by hand.</li>
-      <li><code>geolocation</code> + <code>offscreen</code> — attach your real location to a punch when your company's Keka policy requires it (the offscreen page lets the background read it for automatic punches).</li>
-      <li><code>cookies</code> — read the Keka-set <code>Subdomain</code> cookie to find your tenant.</li>
-      <li>Host permissions on <code>*.keka.com</code> — required to call Keka's own APIs.</li>
-    </ul>
-
-    <h2>6. Your control</h2>
-    <p>
-      You can clear every piece of data ShiftMate has stored at any time
-      via the popup's <strong>Settings → Reset Everything</strong> button,
-      or by removing the extension from
-      <code>chrome://extensions/</code>.
-    </p>
-
-    <h2>7. Children</h2>
-    <p>
-      ShiftMate is designed for adult employees of organisations that use
-      Keka. It is not intended for use by children under 13.
-    </p>
-
-    <h2>8. Changes to this policy</h2>
-    <p>
-      If the extension's data handling ever changes, this page will be
-      updated and the "Last updated" date at the top will change with it.
-    </p>
-
-    <h2>9. Contact</h2>
-    <p>
-      Questions or concerns:
-      <a href="https://github.com/pankaj1980patel/shiftmaker/issues">open an issue on GitHub</a>.
-    </p>
-
-    <div class="footer">
-      ShiftMate is an independent open-source project. It is not affiliated
-      with, endorsed by, or sponsored by Keka HR Technologies Pvt Ltd.
+<section class="final" style="padding-top: 0">
+  <div class="wrap">
+    <img src="assets/pumpkin-128.png" alt="">
+    <h2>Stop thinking about attendance</h2>
+    <p class="lead">Install ShiftMate and let the pumpkin handle it.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/kjglhonepkcmbcapgbnnihoihhanhdee">Add to Chrome, it’s free</a>
+      <a class="btn btn-ghost" href="https://github.com/pankaj1980patel/shiftmaker">View on GitHub</a>
     </div>
-  </main>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 ShiftMate · Not affiliated with Keka HR Technologies Pvt Ltd.</span>
+    <span><a href="privacy.html">Privacy policy</a> · <a href="https://github.com/pankaj1980patel/shiftmaker/issues">Support</a> · <a href="https://github.com/pankaj1980patel/shiftmaker/releases/latest">Releases</a></span>
+  </div>
+</footer>
+
 </body>
 </html>

@@ -1,6 +1,6 @@
 import { Storage, cached } from './storage.js';
 import { unwrap } from './time.js';
-import { refreshFromKekaTab } from './grab-tokens.js';
+import { refreshFromKekaTab, writeBackToKekaTab } from './grab-tokens.js';
 import { ensureClientId } from './auth-login.js';
 import { tenantUrl } from './tenant.js';
 import { getCurrentLocation } from './location.js';
@@ -52,6 +52,63 @@ async function readTokens() {
   };
 }
 
+// refresh_token grant → token response. Throws authError (dead on 400/401).
+async function grantRefresh(refreshToken) {
+  const clientId = await ensureClientId();
+  const body = new URLSearchParams();
+  body.append('grant_type', 'refresh_token');
+  body.append('refresh_token', refreshToken);
+  body.append('client_id', clientId);
+
+  let response;
+  try {
+    response = await fetch('https://app.keka.com/connect/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+  } catch (_) {
+    throw authError(KEKA_DOWN_MSG, false); // offline / DNS / CORS blip
+  }
+  // 400/401 (invalid_grant etc.) = the refresh token is dead. Anything
+  // else (5xx, 429) is Keka's problem, not the session's.
+  if (response.status === 400 || response.status === 401) throw authError('Session expired', true);
+  if (!response.ok) throw authError(KEKA_DOWN_MSG, false);
+
+  const data = await response.json().catch(() => null);
+  if (!data?.access_token) throw authError(KEKA_DOWN_MSG, false);
+  return data;
+}
+
+async function storeRefreshed(data, usedRefreshToken, source) {
+  await Storage.set({
+    [Storage.KEYS.ACCESS_TOKEN]: data.access_token,
+    // Rotation — but never overwrite ours with nothing.
+    [Storage.KEYS.REFRESH_TOKEN]: data.refresh_token || usedRefreshToken,
+    // Refresh slightly before the real expiry.
+    [Storage.KEYS.EXPIRES_AT]: Date.now() + (data.expires_in * 1000) - 60000,
+    [Storage.KEYS.TOKEN_SOURCE]: source
+  });
+}
+
+/**
+ * The Keka tab holds a session but its access token has lapsed — typically a
+ * background tab Chrome has throttled or frozen, so oidc-client-ts never got
+ * to renew it. Waiting for it can take forever, so renew on the tab's behalf:
+ * spend the tab's (current) refresh token and write the new pair back into
+ * the tab, which keeps it signed in.
+ */
+async function renewForKekaTab(r) {
+  if (r.clientId) await Storage.set({ [Storage.KEYS.CLIENT_ID]: r.clientId });
+  const data = await grantRefresh(r.token);
+  const key = r.source?.startsWith('storage:') ? r.source.slice('storage:'.length) : null;
+  const shared = await writeBackToKekaTab(r.tabId, key, data);
+  // If the tab couldn't take the new pair, its copy is now spent: the
+  // session is ours from here on.
+  await storeRefreshed(data, r.token, shared ? 'grabbed' : 'own');
+  return data.access_token;
+}
+
 export const API = {
   /**
    * refresh_token grant. Keka rotates the refresh token on every use, so this
@@ -60,40 +117,8 @@ export const API = {
   refreshToken: async () => {
     const { refresh: refreshToken } = await readTokens();
     if (!refreshToken) throw authError('No refresh token available', true);
-
-    const clientId = await ensureClientId();
-    const body = new URLSearchParams();
-    body.append('grant_type', 'refresh_token');
-    body.append('refresh_token', refreshToken);
-    body.append('client_id', clientId);
-
-    let response;
-    try {
-      response = await fetch('https://app.keka.com/connect/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body
-      });
-    } catch (_) {
-      throw authError(KEKA_DOWN_MSG, false); // offline / DNS / CORS blip
-    }
-    // 400/401 (invalid_grant etc.) = the refresh token is dead. Anything
-    // else (5xx, 429) is Keka's problem, not the session's.
-    if (response.status === 400 || response.status === 401) throw authError('Session expired', true);
-    if (!response.ok) throw authError(KEKA_DOWN_MSG, false);
-
-    const data = await response.json();
-    if (!data.access_token) throw authError(KEKA_DOWN_MSG, false);
-    // Refresh slightly before the real expiry.
-    const expiresAt = Date.now() + (data.expires_in * 1000) - 60000;
-    await Storage.set({
-      [Storage.KEYS.ACCESS_TOKEN]: data.access_token,
-      // Rotation — but never overwrite ours with nothing.
-      [Storage.KEYS.REFRESH_TOKEN]: data.refresh_token || refreshToken,
-      [Storage.KEYS.EXPIRES_AT]: expiresAt,
-      // Once we've used the refresh token ourselves, the session is ours.
-      [Storage.KEYS.TOKEN_SOURCE]: 'own'
-    });
+    const data = await grantRefresh(refreshToken);
+    await storeRefreshed(data, refreshToken, 'own'); // we spent it: the session is ours
     return data.access_token;
   },
 
@@ -107,10 +132,11 @@ export const API = {
    * Sessions copied from an open Keka tab ('grabbed') share the Keka web
    * app's refresh token; using it would revoke the tab's copy and log the
    * user out of Keka. So for those we re-read fresh tokens from the tab (the
-   * web app renews them itself). If a Keka tab is open but holds nothing
-   * fresh yet, we wait for it rather than spend its refresh token. Only with
-   * no Keka tab at all do we use the grant, so overnight automation keeps
-   * working (Keka in the browser then asks you to sign in on your next visit).
+   * web app renews them itself). If the tab's tokens have lapsed (idle or
+   * frozen background tab), we renew with the tab's refresh token and write
+   * the new pair back into the tab. Only with no Keka tab at all do we use
+   * our stored grant, so overnight automation keeps working (Keka in the
+   * browser then asks you to sign in on your next visit).
    */
   ensureValidToken: async (staleToken = null) => withRefreshLock(async () => {
     const t = await readTokens();
@@ -119,7 +145,7 @@ export const API = {
     if (t.source === 'grabbed') {
       const tab = await refreshFromKekaTab(staleToken).catch(() => ({ token: null, tabOpen: false }));
       if (tab.token) return tab.token;
-      if (tab.tabOpen) throw authError(KEKA_DOWN_MSG, false);
+      if (tab.tabOpen) return await renewForKekaTab(tab.result);
     }
     try {
       return await API.refreshToken();

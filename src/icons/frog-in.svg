@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" stroke="#2f6b1f" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Punch In: reluctant Monday frog throwing a lazy jab -->
+  <!-- feet -->
+  <ellipse cx="19" cy="58" rx="6" ry="3" fill="#5aa83e"/>
+  <ellipse cx="36" cy="58" rx="6" ry="3" fill="#5aa83e"/>
+  <!-- body -->
+  <ellipse cx="27" cy="45" rx="14" ry="12.5" fill="#6abf4b"/>
+  <path d="M15 49c3 6 14 9 22 5" fill="none" stroke="#4e9a35" stroke-width="2.4" opacity=".55"/>
+  <ellipse cx="29" cy="47" rx="8.5" ry="8" fill="#cfe8a8" stroke="none"/>
+  <!-- guard glove -->
+  <path d="M20 42l4 1" stroke-width="5" stroke="#2f6b1f"/>
+  <circle cx="26" cy="42" r="4.6" fill="#e53935"/>
+  <path d="M24 40.5a2.5 2.5 0 0 1 3-1" fill="none" stroke="#ff8a80" stroke-width="1.3"/>
+  <!-- jab arm + glove -->
+  <path d="M36 40l12-4" stroke-width="5.2"/>
+  <path d="M36 40l12-4" stroke-width="2.6" stroke="#6abf4b"/>
+  <path d="M48 31.5c4-1.5 9 .5 9 4.5s-4 6-8 5.5c-4-.5-5-8.5-1-10z" fill="#e53935"/>
+  <path d="M50.5 33.5c1.5-.7 3.4-.4 4.3.7" fill="none" stroke="#ff8a80" stroke-width="1.3"/>
+  <!-- pow -->
+  <path d="M59 27l2-3M61 36h2.5M59 44l2 2.5" stroke="#f5b400" stroke-width="2"/>
+  <!-- head -->
+  <ellipse cx="29" cy="27" rx="18" ry="11.5" fill="#6abf4b"/>
+  <path d="M13 30c4 6 18 8 30 3" fill="none" stroke="#4e9a35" stroke-width="2.4" opacity=".5"/>
+  <!-- eye bumps -->
+  <circle cx="21" cy="17" r="7.5" fill="#6abf4b"/>
+  <circle cx="37" cy="17" r="7.5" fill="#6abf4b"/>
+  <circle cx="21" cy="17.5" r="5.4" fill="#fff"/>
+  <circle cx="37" cy="17.5" r="5.4" fill="#fff"/>
+  <circle cx="23" cy="19.5" r="2.4" fill="#1f2a1a" stroke="none"/>
+  <circle cx="39" cy="19.5" r="2.4" fill="#1f2a1a" stroke="none"/>
+  <!-- heavy, unimpressed eyelids -->
+  <path d="M15.4 17.5a5.6 5.6 0 0 1 11.2 0l0 .8c-3.5-1-7.5-1-11.2.4z" fill="#5aa83e"/>
+  <path d="M31.4 18.6a5.6 5.6 0 0 1 11.2-1.1l0 .8c-3.5-1-7.5-.6-11.2.3z" fill="#5aa83e"/>
+  <!-- flat "ugh, fine" mouth + cheek -->
+  <path d="M18 30.5c6 1.5 13 1.5 22-.8" fill="none" stroke-width="1.9"/>
+  <ellipse cx="43" cy="27.5" rx="2.6" ry="1.6" fill="#f48fb1" stroke="none" opacity=".7"/>
+</svg>

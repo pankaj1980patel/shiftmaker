@@ -85,7 +85,7 @@
   <main>
     <header>
       <h1>ShiftMate — Privacy Policy</h1>
-      <div class="subtitle">Last updated: 12 May 2026</div>
+      <div class="subtitle">Last updated: 14 November 2026</div>
     </header>
 
     <p>
@@ -120,13 +120,34 @@
           are never retained by the extension after the request completes.
         </li>
         <li>
-          <strong>Captcha response</strong> — submitted along with the
-          password on Keka's request. Not retained.
+          <strong>Captcha response and one-time code (OTP)</strong> —
+          submitted to Keka when it asks for them during sign-in. Not
+          retained.
+        </li>
+        <li>
+          <strong>Device location</strong> (latitude and longitude) — read
+          from Chrome only at the moment you punch in or out, and only when
+          your company's Keka attendance policy requires a location for web
+          clock-in. It is sent to Keka with that punch, exactly as Keka's own
+          web app does, and is never stored or sent anywhere else. If
+          location is unavailable, the punch is sent without one.
         </li>
         <li>
           <strong>Attendance data</strong> (today's punches, recent
           workdays, totals) — fetched from Keka on demand to render the
           popup; not stored beyond what the popup needs to display.
+        </li>
+        <li>
+          <strong>Work-calendar and team data</strong> (your shift, holidays,
+          weekly offs, leave balances, pending-approval and notification
+          counts, colleagues' names and birthdays, who is on leave today) —
+          fetched from your Keka dashboard to show in the popup, skip auto
+          clock-in on days off and send reminders. Cached briefly in memory
+          for the browser session; never sent anywhere except back to Keka.
+        </li>
+        <li>
+          <strong>Your settings</strong> (auto clock-in/out times, break
+          preferences, reminder toggles, birthday-wish template).
         </li>
         <li>
           <strong>Active break state</strong> (start time, return time,
@@ -144,9 +165,12 @@
 
     <h2>2. Where this data is stored</h2>
     <p>
-      All persistent data is written exclusively to
-      <code>chrome.storage.sync</code> — Chrome's built-in, encrypted
-      storage tied to your Google profile. Nothing is written to any
+      Sign-in tokens, the active break and other device-specific state are
+      kept in <code>chrome.storage.local</code> on this computer only.
+      Your settings and Keka subdomain are kept in
+      <code>chrome.storage.sync</code> so they follow your Chrome profile.
+      Short-lived API caches live in <code>chrome.storage.session</code> and
+      are cleared when the browser closes. Nothing is written to any
       external database, file, or remote server operated by the extension
       author.
     </p>
@@ -173,10 +197,11 @@
 
     <h2>5. Permissions, briefly explained</h2>
     <ul>
-      <li><code>storage</code> — keep tokens and break state across popup opens.</li>
-      <li><code>alarms</code> — fire the auto clock-in at the end of a timed break, and refresh the toolbar badge once a minute.</li>
-      <li><code>notifications</code> — confirm whether the post-break auto clock-in succeeded.</li>
-      <li><code>tabs</code> + <code>scripting</code> — detect an open Keka tab so you can sign in without copying tokens by hand.</li>
+      <li><code>storage</code> — keep tokens, settings and break state across popup opens.</li>
+      <li><code>alarms</code> — run scheduled auto clock-in/out and breaks, and refresh the toolbar badge once a minute.</li>
+      <li><code>notifications</code> — tell you about automatic punches, birthdays and requests awaiting your approval.</li>
+      <li><code>scripting</code> — read the sign-in session from an open Keka tab so you can sign in without copying tokens by hand.</li>
+      <li><code>geolocation</code> + <code>offscreen</code> — attach your real location to a punch when your company's Keka policy requires it (the offscreen page lets the background read it for automatic punches).</li>
       <li><code>cookies</code> — read the Keka-set <code>Subdomain</code> cookie to find your tenant.</li>
       <li>Host permissions on <code>*.keka.com</code> — required to call Keka's own APIs.</li>
     </ul>

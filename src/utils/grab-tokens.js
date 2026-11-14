@@ -113,15 +113,18 @@ export async function grabTokensFromKekaTab() {
 }
 
 /**
- * Run grabTokensFromKekaTab() and persist whatever it finds.
- * Returns the stored access token (if any) so the caller can retry immediately.
+ * Persist tokens read from a Keka tab. The session is marked 'grabbed': it
+ * shares the Keka web app's refresh token, so API.ensureValidToken re-reads
+ * the tab instead of spending that token (which would log the tab out).
+ * @returns {Promise<string|null>} the stored access token, if any
  */
-export async function refreshFromKekaTab() {
-  const result = await grabTokensFromKekaTab();
+export async function saveGrabbedTokens(result) {
   if (!result) return null;
-
   const updates = {};
-  if (result.token) updates[Storage.KEYS.REFRESH_TOKEN] = result.token;
+  if (result.token) {
+    updates[Storage.KEYS.REFRESH_TOKEN] = result.token;
+    updates[Storage.KEYS.TOKEN_SOURCE] = 'grabbed';
+  }
   if (result.clientId) updates[Storage.KEYS.CLIENT_ID] = result.clientId;
   if (result.tenant) updates[Storage.KEYS.TENANT_SUBDOMAIN] = result.tenant;
   if (result.accessToken) {
@@ -131,7 +134,21 @@ export async function refreshFromKekaTab() {
       : Date.now() + 5 * 60 * 1000;
     updates[Storage.KEYS.EXPIRES_AT] = expiresAtMs - 60000; // 1-min safety margin
   }
-
   if (Object.keys(updates).length) await Storage.set(updates);
   return result.accessToken || null;
+}
+
+/**
+ * Read the open Keka tab and persist its tokens if they're usable (no token
+ * refresh). Tokens equal to `rejectToken` (just got a 401) or already
+ * expired are ignored and not saved.
+ * @returns {Promise<{ token: string|null, tabOpen: boolean }>}
+ */
+export async function refreshFromKekaTab(rejectToken = null) {
+  const r = await grabTokensFromKekaTab();
+  if (!r) return { token: null, tabOpen: false };
+  const fresh = r.accessToken && r.accessToken !== rejectToken
+    && (!r.expiresAt || r.expiresAt * 1000 - 60000 > Date.now());
+  if (!fresh) return { token: null, tabOpen: true };
+  return { token: await saveGrabbedTokens(r), tabOpen: true };
 }

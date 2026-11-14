@@ -1,15 +1,16 @@
 {
     "manifest_version": 3,
     "name": "ShiftMate",
-    "version": "1.2.0",
-    "description": "Keka attendance companion: clock in/out, timed breaks, scheduled auto clock-in/out, multi-tenant, live 8-hour progress badge.",
+    "version": "1.3.0",
+    "description": "Keka attendance companion: punch in/out, breaks, auto clock-in/out that skips days off, OTP sign-in, leave & birthday reminders.",
     "permissions": [
         "storage",
         "alarms",
         "notifications",
-        "tabs",
         "scripting",
-        "cookies"
+        "cookies",
+        "geolocation",
+        "offscreen"
     ],
     "host_permissions": [
         "https://*.keka.com/*"
@@ -20,11 +21,18 @@
     },
     "action": {
         "default_popup": "src/popup.html",
-        "default_title": "ShiftMate — attendance, breaks & progress"
+        "default_title": "ShiftMate — attendance, breaks & progress",
+        "default_icon": {
+            "16": "src/icons/pumpkin-toolbar-16.png",
+            "32": "src/icons/pumpkin-toolbar-32.png",
+            "48": "src/icons/pumpkin-toolbar-48.png",
+            "128": "src/icons/pumpkin-toolbar-128.png"
+        }
     },
     "icons": {
-        "16": "src/icons/bone-32.png",
-        "48": "src/icons/bone-48.png",
-        "128": "src/icons/bone-128.png"
+        "16": "src/icons/smily-pumpkin-32.png",
+        "32": "src/icons/smily-pumpkin-32.png",
+        "48": "src/icons/smily-pumpkin-48.png",
+        "128": "src/icons/smily-pumpkin-128.png"
     }
 }

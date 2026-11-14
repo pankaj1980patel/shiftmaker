@@ -11,12 +11,12 @@
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <img src="icons/smily-pumpkin-48.png" alt="ShiftMate" id="app-logo">
+        <img src="icons/smily-pumpkin-48.png" alt="" id="app-logo">
         <span>ShiftMate</span>
       </div>
-      <div class="status-indicator" id="connection-status">
+      <div class="status-indicator" id="connection-status" role="status" aria-live="polite">
         <span class="dot"></span>
-        <span class="text">Disconnected</span>
+        <span class="text">Napping 😴</span>
       </div>
     </header>
 
@@ -66,6 +66,24 @@
           <button id="btn-login-submit" class="btn btn-primary">Sign in</button>
         </div>
 
+        <!-- Step 3 (only when Keka asks for 2FA): choose channel, then enter code -->
+        <div id="login-step-otp" class="login-step hidden">
+          <div id="otp-choose" class="otp-choose">
+            <p class="field-hint">Keka needs to verify it's you. Where should it send the code?</p>
+            <div id="otp-providers" class="otp-providers"></div>
+          </div>
+
+          <div id="otp-verify" class="otp-verify hidden">
+            <p id="otp-destination" class="field-hint"></p>
+            <label class="field-label" for="login-otp">Verification code</label>
+            <input type="text" id="login-otp" class="text-input otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code">
+            <button id="btn-otp-verify" class="btn btn-primary">Verify &amp; sign in</button>
+            <button type="button" id="btn-otp-resend" class="btn-link otp-resend">Resend code</button>
+          </div>
+
+          <button type="button" id="btn-otp-restart" class="btn-link otp-restart">Start over</button>
+        </div>
+
         <!-- Secondary actions -->
         <div class="login-alt">
           <button id="btn-auto-grab" class="btn-link">Retry auto-grab from open Keka tab</button>
@@ -85,7 +103,8 @@
     <div id="view-dashboard" class="view hidden">
       <!-- User Profile -->
       <div class="user-profile" id="user-profile">
-        <img class="avatar" id="user-avatar" src="" alt="User" nonce="1234">
+        <span class="avatar avatar-initials" id="avatar-initials" aria-hidden="true"></span>
+        <img class="avatar hidden" id="user-avatar" alt="">
         <div class="info">
           <h3 id="user-name">Loading...</h3>
           <p id="user-title">...</p>
@@ -93,88 +112,179 @@
       </div>
 
       <!-- Tabs -->
-      <div class="tabs">
-        <button class="tab active" data-tab="today">Today</button>
-        <button class="tab" data-tab="history">History</button>
-        <button class="tab" data-tab="settings">Settings</button>
+      <div class="tabs" role="tablist" aria-label="ShiftMate sections">
+        <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-today" data-tab="today">Today</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-overview" tabindex="-1" data-tab="overview">Overview<span id="overview-dot" class="tab-dot hidden" aria-label="New items"></span></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-history" tabindex="-1" data-tab="history">History</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-settings" tabindex="-1" data-tab="settings">Settings</button>
       </div>
 
       <!-- Today Tab -->
-      <div class="tab-panel" id="tab-today">
-        <!-- Main Status Card -->
+      <div class="tab-panel" id="tab-today" role="tabpanel">
+        <!-- Status: clock, state, progress toward today's target, punch -->
         <div class="card status-card">
-          <div class="timer-display">
-            <span id="current-time">--:--</span>
-            <small id="current-date">Today</small>
+          <div class="status-top">
+            <div class="timer-display">
+              <span id="current-time">--:--</span>
+              <small id="current-date"></small>
+            </div>
+            <span id="state-pill" class="state-pill state-unknown">Warming up… ⏳</span>
           </div>
+          <p id="day-status" class="day-status hidden"></p>
+          <p id="attendance-error" class="attendance-error hidden" role="alert">Couldn’t load today’s attendance. This is fine 🔥 — punching is paused until it loads; reopen the popup to retry.</p>
+
+          <div class="progress-block">
+            <div class="progress-head">
+              <span id="stat-duration" class="worked">0h 0m</span>
+              <span id="target-label" class="target-label">worked</span>
+            </div>
+            <div class="progress-bar" role="progressbar" id="progress-bar" aria-label="Worked today" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-foot">
+              <span id="progress-left"></span>
+              <span id="progress-eta"></span>
+            </div>
+          </div>
+
           <div class="attendance-summary">
             <div class="stat">
-              <label>In</label>
+              <label>First in</label>
               <span id="stat-in">--:--</span>
             </div>
             <div class="stat">
-              <label>Out</label>
+              <label>Last out</label>
               <span id="stat-out">--:--</span>
-            </div>
-            <div class="stat">
-              <label>Duration</label>
-              <span id="stat-duration">0h 0m</span>
             </div>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="actions">
-          <button id="btn-clock-in" class="btn btn-success action-btn">
-            <span class="icon">📍</span> Punch In
+          <button id="btn-clock-in" class="btn btn-success action-btn punch-in" disabled>
+            <span class="punch-icon" aria-hidden="true"><img src="icons/frog-in.svg" alt="" width="30" height="30"></span>
+            <span class="punch-text"><span class="punch-label">Punch In</span><span class="punch-hint">Let’s do this!</span></span>
           </button>
-          <button id="btn-clock-out" class="btn btn-danger action-btn">
-            <span class="icon">👋</span> Punch Out
+          <button id="btn-clock-out" class="btn btn-danger action-btn punch-out" disabled>
+            <span class="punch-icon" aria-hidden="true"><img src="icons/frog-out.svg" alt="" width="30" height="30"></span>
+            <span class="punch-text"><span class="punch-label">Punch Out</span><span class="punch-hint">I’m outta here!</span></span>
           </button>
-        </div>
-
-        <!-- Activity Log -->
-        <div class="card history-card">
-          <h4>Activity Log</h4>
-          <div id="history-list" class="history-list">
-            <!-- Items injected here -->
-          </div>
         </div>
 
         <!-- Take a Break -->
         <div class="card break-card">
-          <h4>Take a Break</h4>
+          <h4>Take a break ☕</h4>
           <div id="break-idle">
-            <p class="break-hint">Punches you OUT now and back IN automatically after the chosen duration.</p>
+            <p class="break-hint" id="break-hint">Waiting for your attendance status…</p>
             <div class="break-presets">
-              <button class="btn-break" data-min="30">30 min</button>
-              <button class="btn-break" data-min="45">45 min</button>
-              <button class="btn-break" data-min="60">60 min</button>
-              <button class="btn-break" data-min="0">Custom</button>
+              <button class="btn-break" data-min="30">☕ 30m</button>
+              <button class="btn-break" data-min="45">🍔 45m</button>
+              <button class="btn-break" data-min="60">😴 60m</button>
+              <button class="btn-break" data-min="0">⏱️ Other</button>
+            </div>
+            <div id="break-custom" class="break-custom hidden">
+              <label class="field-label" for="break-custom-input">Minutes</label>
+              <input type="number" id="break-custom-input" class="time-input num-input" min="1" max="480" step="5" value="30" inputmode="numeric">
+              <button type="button" id="btn-break-custom-start" class="btn btn-primary btn-small">Let’s go ☕</button>
             </div>
           </div>
           <div id="break-active" class="hidden">
-            <p class="break-status">On break — returning at <strong id="break-return-time">--:--</strong></p>
+            <p class="break-status">Chilling 🧘 — back at <strong id="break-return-time">--:--</strong></p>
             <p class="break-countdown" id="break-countdown">--</p>
-            <button id="btn-return-now" class="btn btn-primary">Return Now</button>
+            <button id="btn-return-now" class="btn btn-primary">I’m back early 🏃</button>
           </div>
+        </div>
+
+        <!-- Today's sessions -->
+        <div class="card history-card sessions-card">
+          <h4>Today’s grind 💼</h4>
+          <div id="history-list" class="history-list"></div>
+        </div>
+
+        <!-- Birthdays (hidden when there are none, or the company hides the widget) -->
+        <div class="card birthday-card hidden" id="birthday-card">
+          <h4>Cake alert 🎂</h4>
+          <ul id="birthday-list" class="birthday-list"></ul>
+        </div>
+      </div>
+
+      <!-- Overview Tab -->
+      <div class="tab-panel hidden" id="tab-overview" role="tabpanel">
+        <div class="card ov-card">
+          <div class="section-head">
+            <h4>This week 🗓️</h4>
+            <button type="button" class="section-link" data-route="attendance">Attendance ↗</button>
+          </div>
+          <ol id="week-strip" class="week-strip" aria-label="This week"><li class="skeleton week-skeleton" aria-hidden="true"></li></ol>
+          <p id="week-note" class="week-note hidden"></p>
+        </div>
+
+        <div class="card ov-card">
+          <div class="section-head"><h4>Inbox 📬</h4></div>
+          <div class="inbox-row">
+            <button type="button" class="inbox-tile" id="inbox-approvals" data-route="approvals">
+              <span class="inbox-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </span>
+              <span class="inbox-count" id="inbox-approvals-count">–</span>
+              <span class="inbox-label">Approvals</span>
+              <span class="inbox-state" id="inbox-approvals-state"></span>
+            </button>
+            <button type="button" class="inbox-tile" id="inbox-notifications" data-route="notifications">
+              <span class="inbox-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </span>
+              <span class="inbox-count" id="inbox-notifications-count">–</span>
+              <span class="inbox-label">Notifications</span>
+              <span class="inbox-state" id="inbox-notifications-state"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card ov-card">
+          <div class="section-head">
+            <h4>Escape days 🏝️</h4>
+            <button type="button" class="section-link" data-route="leave">Apply / details ↗</button>
+          </div>
+          <ul id="leave-list" class="overview-list leave-list"><li class="skeleton" aria-hidden="true"></li><li class="skeleton" aria-hidden="true"></li></ul>
+        </div>
+
+        <div class="card ov-card">
+          <div class="section-head">
+            <h4>Holidays ahead 🎉</h4>
+            <button type="button" class="section-link" data-route="dashboard">All ↗</button>
+          </div>
+          <ul id="holiday-list" class="overview-list holiday-list"><li class="skeleton" aria-hidden="true"></li><li class="skeleton" aria-hidden="true"></li></ul>
+        </div>
+
+        <div class="card ov-card">
+          <div class="section-head">
+            <h4>Out of office 🌴</h4>
+            <span id="onleave-count" class="section-count"></span>
+          </div>
+          <ul id="onleave-list" class="overview-list people-list"><li class="skeleton" aria-hidden="true"></li><li class="skeleton" aria-hidden="true"></li></ul>
         </div>
       </div>
 
       <!-- History Tab -->
-      <div class="tab-panel hidden" id="tab-history">
-        <div class="card history-card">
-          <h4>Previous Days</h4>
+      <div class="tab-panel hidden" id="tab-history" role="tabpanel">
+        <div class="card history-card days-card">
+          <div class="section-head">
+            <h4>Last 3 days 📜</h4>
+            <button type="button" class="section-link" data-route="attendance">Full history ↗</button>
+          </div>
+          <div id="history-summary" class="history-summary hidden"></div>
           <div id="day-list" class="day-list">
-            <div style="text-align:center; color: var(--text-muted); font-size: 12px; padding: 16px;">Loading...</div>
+            <div class="skeleton" aria-hidden="true"></div>
+            <div class="skeleton" aria-hidden="true"></div>
           </div>
         </div>
       </div>
 
       <!-- Settings Tab -->
-      <div class="tab-panel hidden" id="tab-settings">
-        <div class="card">
-          <h4>Account</h4>
+      <div class="tab-panel hidden" id="tab-settings" role="tabpanel">
+        <div class="card settings-card">
+          <h4>You 🙋</h4>
           <div class="setting-row">
             <span>Status</span>
             <span id="setting-connection" class="setting-value">—</span>
@@ -184,21 +294,45 @@
             <span id="setting-tenant" class="setting-value mono">—</span>
           </div>
           <div class="setting-row">
-            <span>Client ID</span>
-            <span id="setting-clientid" class="setting-value mono">—</span>
+            <span>Version</span>
+            <span id="setting-version" class="setting-value">—</span>
           </div>
+          <button id="btn-reset" class="btn btn-secondary btn-signout">Sign out of this browser 👋</button>
+          <p class="hint">Clears this browser's sign-in, active break and caches. Your settings are kept and stay synced.</p>
         </div>
 
-        <div class="card automation-card">
-          <h4>Automation</h4>
+        <div class="card settings-card automation-card">
+          <h4>Autopilot 🤖</h4>
+          <div class="setting-row shift-row">
+            <div class="setting-label">
+              <span>Your shift</span>
+              <small id="setting-shift">—</small>
+            </div>
+          </div>
+          <button type="button" id="btn-use-shift-times" class="btn btn-secondary hidden">Use shift times for auto clock-in/out</button>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Auto Clock-In</span>
+              <small>We punch you IN at this time — only if you haven’t yet. Sleep in, we’ve got you 😴</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-in-enabled" aria-label="Auto Clock-In">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row indent" id="auto-in-row">
+            <span>Clock-in time</span>
+            <input type="time" id="auto-in-time" class="time-input" step="60">
+          </div>
 
           <div class="setting-row">
             <div class="setting-label">
               <span>Auto Clock-Out</span>
-              <small>Punches you OUT at this time each day (if you're still clocked in).</small>
+              <small>Forgot to leave? We punch you OUT at this time. Go home 🏠</small>
             </div>
             <label class="switch">
-              <input type="checkbox" id="auto-out-enabled">
+              <input type="checkbox" id="auto-out-enabled" aria-label="Auto Clock-Out">
               <span class="slider"></span>
             </label>
           </div>
@@ -209,31 +343,83 @@
 
           <div class="setting-row">
             <div class="setting-label">
-              <span>Auto Clock-In</span>
-              <small>Punches you IN at this time, only if you have zero punches for the day.</small>
+              <span>Skip days off</span>
+              <small>No auto punch on holidays, weekends or leave. Days off are sacred 🙏</small>
             </div>
             <label class="switch">
-              <input type="checkbox" id="auto-in-enabled">
+              <input type="checkbox" id="skip-days-off" aria-label="Skip days off">
               <span class="slider"></span>
             </label>
           </div>
-          <div class="setting-row indent" id="auto-in-row">
-            <span>Clock-in time</span>
-            <input type="time" id="auto-in-time" class="time-input" step="60">
-          </div>
-
-          <p id="automation-status" class="automation-status hidden"></p>
+          <p class="hint">Heads up 👯 Autopilot settings sync to every Chrome signed in to your Google account, so two laptops awake at clock-in time could both punch. Keep it on one. Punch in with an office fingerprint or card reader? ShiftMate can’t see those, so leave Auto Clock-In off.</p>
         </div>
 
-        <div class="card danger-zone">
-          <h4>Reset</h4>
-          <p class="hint">Clears stored tokens, client ID, active break, and badge. You will need to reconnect.</p>
-          <button id="btn-reset" class="btn btn-danger-solid">Reset Everything</button>
+        <div class="card settings-card automation-card">
+          <h4>Breaks 🍩</h4>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Auto Break</span>
+              <small>Once a day, in this window, we punch you OUT for lunch and back IN after. Bon appétit 🍝</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-break-enabled" aria-label="Auto Break">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row indent" id="auto-break-window-row">
+            <span>Between</span>
+            <span class="time-range">
+              <input type="time" id="auto-break-from" class="time-input" step="60">
+              <span class="time-range-sep">–</span>
+              <input type="time" id="auto-break-to" class="time-input" step="60">
+            </span>
+          </div>
+          <div class="setting-row indent" id="auto-break-length-row">
+            <span>Break length</span>
+            <span class="time-range">
+              <input type="number" id="auto-break-minutes" class="time-input num-input" min="1" max="240" step="5" inputmode="numeric">
+              <span class="time-range-sep">min</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="card settings-card automation-card">
+          <h4>Nudges 🔔</h4>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Birthday reminders</span>
+              <small>A heads-up on birthday mornings, so you’re first with the wishes 🥳</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="birthday-notify" aria-label="Birthday reminders">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>Approval alerts</span>
+              <small>Ping me when someone needs my blessing 🙏</small>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="approval-notify" aria-label="Approval alerts">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="wish-editor">
+            <label class="field-label" for="birthday-wish">Birthday wish message</label>
+            <textarea id="birthday-wish" class="text-input wish-input" rows="3" spellcheck="true"></textarea>
+            <div class="wish-footer">
+              <small class="field-hint">Use <code>{firstName}</code> or <code>{name}</code>. Copied with the 📋 button on a birthday.</small>
+              <button type="button" id="btn-wish-reset" class="btn-link">Reset</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     
   </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   <script type="module" src="popup.js"></script>
 </body>
 </html>

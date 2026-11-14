@@ -13,7 +13,6 @@
 
 const TIMEOUT_MS = 8000;
 const MAX_AGE_MS = 5 * 60 * 1000; // accept a fix up to 5 minutes old
-const OFFSCREEN_URL = 'src/offscreen.html';
 
 export function readPosition() {
   return new Promise((resolve) => {
@@ -29,6 +28,8 @@ export function readPosition() {
   });
 }
 
+// #chrome-only-start (stripped from the Firefox build, which has no offscreen API)
+const OFFSCREEN_URL = 'src/offscreen.html';
 let creating = null;
 async function ensureOffscreen() {
   if (await chrome.offscreen.hasDocument()) return;
@@ -42,6 +43,14 @@ async function ensureOffscreen() {
   await creating;
 }
 
+async function offscreenLocation() {
+  if (!chrome.offscreen) return null;
+  await ensureOffscreen();
+  const res = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'get_location' });
+  return res && typeof res.latitude === 'number' ? res : null;
+}
+// #chrome-only-end
+
 /**
  * @returns {Promise<{latitude:number, longitude:number} | null>}
  */
@@ -51,10 +60,7 @@ export async function getCurrentLocation() {
     if (typeof document !== 'undefined' && navigator.geolocation) {
       return await readPosition();
     }
-    if (!chrome.offscreen) return null;
-    await ensureOffscreen();
-    const res = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'get_location' });
-    return res && typeof res.latitude === 'number' ? res : null;
+    return await offscreenLocation();
   } catch (e) {
     console.warn('[ShiftMate] could not get location', e);
     return null;

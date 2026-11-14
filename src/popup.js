@@ -1272,7 +1272,7 @@ function confirmTwice(btn, confirmLabel, action) {
     if (btn.disabled) return;
     if (btn.dataset.armed !== '1') {
       btn.dataset.armed = '1';
-      btn.dataset.label = btn.innerHTML;
+      btn._label = [...btn.childNodes]; // keep the original nodes (icon + text)
       btn.textContent = confirmLabel;
       btn.classList.add('armed');
       btn._disarm = setTimeout(() => disarm(btn), 3000);
@@ -1285,7 +1285,7 @@ function confirmTwice(btn, confirmLabel, action) {
 function disarm(btn) {
   clearTimeout(btn._disarm);
   if (btn.dataset.armed === '1') {
-    btn.innerHTML = btn.dataset.label; // static markup we put there ourselves
+    if (btn._label) btn.replaceChildren(...btn._label);
     btn.dataset.armed = '';
     btn.classList.remove('armed');
   }
